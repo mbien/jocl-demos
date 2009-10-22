@@ -1,7 +1,6 @@
 package com.mbien.opencl.demos.hellojocl;
 
 import com.mbien.opencl.CLBuffer;
-import com.mbien.opencl.CLBuffer.MEM;
 import com.mbien.opencl.CLCommandQueue;
 import com.mbien.opencl.CLContext;
 import com.mbien.opencl.CLKernel;
@@ -12,6 +11,7 @@ import java.util.Random;
 
 import static java.lang.System.*;
 import static com.sun.gluegen.runtime.BufferFactory.*;
+import static com.mbien.opencl.CLBuffer.Mem.*;
 
 /**
  * Hello Java OpenCL example. Adds all elements of buffer A to buffer B
@@ -33,9 +33,9 @@ public class HelloJOCL {
 
         CLProgram program = context.createProgram(HelloJOCL.class.getResourceAsStream("VectorAdd.cl")).build();
 
-        CLBuffer clBufferA = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, MEM.READ_ONLY);
-        CLBuffer clBufferB = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, MEM.READ_ONLY);
-        CLBuffer clBufferC = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, MEM.WRITE_ONLY);
+        CLBuffer clBufferA = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
+        CLBuffer clBufferB = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
+        CLBuffer clBufferC = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, WRITE_ONLY);
 
         out.println("used device memory: "
             + (clBufferA.buffer.capacity()+clBufferB.buffer.capacity()+clBufferC.buffer.capacity())/1000000 +"MB");
@@ -72,7 +72,7 @@ public class HelloJOCL {
             out.print(clBufferC.buffer.getFloat() + ", ");
         out.println("...; " + clBufferC.buffer.remaining()/SIZEOF_FLOAT + " more");
         
-        System.out.println("computation took: "+(time/1000000)+"ms");
+        out.println("computation took: "+(time/1000000)+"ms");
 
     }
 
