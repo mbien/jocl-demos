@@ -33,9 +33,9 @@ public class HelloJOCL {
 
         CLProgram program = context.createProgram(HelloJOCL.class.getResourceAsStream("VectorAdd.cl")).build();
 
-        CLBuffer clBufferA = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
-        CLBuffer clBufferB = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
-        CLBuffer clBufferC = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, WRITE_ONLY);
+        CLBuffer<ByteBuffer> clBufferA = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
+        CLBuffer<ByteBuffer> clBufferB = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
+        CLBuffer<ByteBuffer> clBufferC = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, WRITE_ONLY);
 
         out.println("used device memory: "
             + (clBufferA.buffer.capacity()+clBufferB.buffer.capacity()+clBufferC.buffer.capacity())/1000000 +"MB");
