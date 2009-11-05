@@ -15,7 +15,7 @@ import javax.media.opengl.GL2;
  */
 public class UserSceneInteraction {
 
-    private float z = -150;
+    private float z = -20;
     private float rotx;
     private float roty;
 
