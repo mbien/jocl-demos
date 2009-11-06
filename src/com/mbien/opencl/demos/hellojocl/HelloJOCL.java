@@ -6,7 +6,7 @@ import com.mbien.opencl.CLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.util.Random;
 
 import static java.lang.System.*;
@@ -33,12 +33,12 @@ public class HelloJOCL {
 
         CLProgram program = context.createProgram(HelloJOCL.class.getResourceAsStream("VectorAdd.cl")).build();
 
-        CLBuffer<ByteBuffer> clBufferA = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
-        CLBuffer<ByteBuffer> clBufferB = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, READ_ONLY);
-        CLBuffer<ByteBuffer> clBufferC = context.createBuffer(globalWorkSize*SIZEOF_FLOAT, WRITE_ONLY);
+        CLBuffer<FloatBuffer> clBufferA = context.createFloatBuffer(globalWorkSize, READ_ONLY);
+        CLBuffer<FloatBuffer> clBufferB = context.createFloatBuffer(globalWorkSize, READ_ONLY);
+        CLBuffer<FloatBuffer> clBufferC = context.createFloatBuffer(globalWorkSize, WRITE_ONLY);
 
         out.println("used device memory: "
-            + (clBufferA.buffer.capacity()+clBufferB.buffer.capacity()+clBufferC.buffer.capacity())/1000000 +"MB");
+            + (clBufferA.buffer.capacity()+clBufferB.buffer.capacity()+clBufferC.buffer.capacity())*4/1000000 +"MB");
 
         // fill read buffers with random numbers (just to have test data; seed is fixed -> results will not change between runs).
         fillBuffer(clBufferA.buffer, 12345);
@@ -51,16 +51,15 @@ public class HelloJOCL {
               .setArg(2, clBufferC)
               .setArg(3, elementCount);
 
-        // create command queue on first device.
-        CLCommandQueue queue = context.getCLDevices()[0].createCommandQueue();
+        // create command queue on fastest device.
+        CLCommandQueue queue = context.getMaxFlopsDevice().createCommandQueue();
 
         // asynchronous write of data to GPU device, blocking read later to get the computed results back.
         long time = nanoTime();
         queue.putWriteBuffer(clBufferA, false)
              .putWriteBuffer(clBufferB, false)
              .putNDRangeKernel(kernel, 1, 0, globalWorkSize, localWorkSize)
-             .putReadBuffer(clBufferC, true)
-             .finish();
+             .putReadBuffer(clBufferC, true);
         time = nanoTime() - time;
 
         // cleanup all resources associated with this context.
@@ -69,17 +68,17 @@ public class HelloJOCL {
         // print first few elements of the resulting buffer to the console.
         out.println("a+b=c results snapshot: ");
         for(int i = 0; i < 10; i++)
-            out.print(clBufferC.buffer.getFloat() + ", ");
+            out.print(clBufferC.buffer.get() + ", ");
         out.println("...; " + clBufferC.buffer.remaining()/SIZEOF_FLOAT + " more");
         
         out.println("computation took: "+(time/1000000)+"ms");
 
     }
 
-    private static final void fillBuffer(ByteBuffer buffer, int seed) {
+    private static final void fillBuffer(FloatBuffer buffer, int seed) {
         Random rnd = new Random(seed);
         while(buffer.remaining() != 0)
-            buffer.putFloat(rnd.nextFloat()*100);
+            buffer.put(rnd.nextFloat()*100);
         buffer.rewind();
     }
 
