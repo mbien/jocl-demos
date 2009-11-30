@@ -34,7 +34,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     private final GLUgl2 glu = new GLUgl2();
 
     private final int MESH_SIZE = 256;
-    
+
     private int width;
     private int height;
 
@@ -129,9 +129,9 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         gl.setSwapInterval(1);
 
         gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_LINE);
-        
+
         gl.glGenBuffers(glObjects.length, glObjects, 0);
-        
+
         gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
         gl.glBufferData(GL2.GL_ELEMENT_ARRAY_BUFFER, ib.capacity() * SIZEOF_INT, ib, GL2.GL_STATIC_DRAW);
         gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -141,7 +141,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
             gl.glBufferData(GL2.GL_ARRAY_BUFFER, vb.capacity() * SIZEOF_FLOAT, vb, GL2.GL_DYNAMIC_DRAW);
             gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
         gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
-        
+
         // OpenCL
         CLProgram program;
         try {
@@ -151,7 +151,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
             System.out.println(program.getBuildLog());
             System.out.println(program.getBuildStatus());
         } catch (IOException ex) {
-            throw new CLException("can not handle exception", ex);
+            throw new RuntimeException("can not handle exception", ex);
         }
 
         commandQueue = clContext.getMaxFlopsDevice().createCommandQueue();
@@ -172,7 +172,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     public void display(GLAutoDrawable drawable) {
 
         GL2 gl = drawable.getGL().getGL2();
-        
+
         compute(gl);
 
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
@@ -185,10 +185,10 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
             gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
             gl.glVertexPointer(4, GL2.GL_FLOAT, 0, 0);
 
-//            gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
-//            gl.glDrawElements(GL2.GL_POINTS, ib.capacity(), GL2.GL_UNSIGNED_INT, 0);
+            gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
+            gl.glDrawElements(GL2.GL_TRIANGLES, ib.capacity(), GL2.GL_UNSIGNED_INT, 0);
 
-            gl.glDrawArrays(GL2.GL_POINTS, 0, vb.capacity()/4);
+//            gl.glDrawArrays(GL2.GL_POINTS, 0, vb.capacity()/4);
 
             gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
 
@@ -255,7 +255,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     }
 
     public void dispose(GLAutoDrawable drawable) {  }
-    
+
     private void deinit() {
         clContext.release();
         System.exit(0);

@@ -16,8 +16,8 @@ import javax.media.opengl.GL2;
 public class UserSceneInteraction {
 
     private float z = -20;
-    private float rotx;
-    private float roty;
+    private float rotx = 45;
+    private float roty = 30;
 
     private Point dragstart;
     private enum MOUSE_MODE { DRAG_ROTATE, DRAG_ZOOM }
@@ -54,7 +54,7 @@ public class UserSceneInteraction {
             public void mouseWheelMoved(MouseWheelEvent e) {
                 z += e.getWheelRotation()*5;
             }
-            
+
         });
         component.addMouseListener(new MouseAdapter() {
 

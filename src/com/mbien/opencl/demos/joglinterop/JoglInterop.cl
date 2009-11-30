@@ -21,4 +21,3 @@ __kernel void sineWave(__global float4 * vertex, int size, float time) {
     // write output vertex
     vertex[y*size + x] = (float4)(u*10.0f, w*10.0f, v*10.0f, 1.0f);
 }
-

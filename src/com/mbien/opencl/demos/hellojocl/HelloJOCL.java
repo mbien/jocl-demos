@@ -10,7 +10,6 @@ import java.nio.FloatBuffer;
 import java.util.Random;
 
 import static java.lang.System.*;
-import static com.sun.gluegen.runtime.BufferFactory.*;
 import static com.mbien.opencl.CLBuffer.Mem.*;
 
 /**
@@ -23,7 +22,7 @@ import static com.mbien.opencl.CLBuffer.Mem.*;
 public class HelloJOCL {
 
     public static void main(String[] args) throws IOException {
-        
+
         int elementCount = 11444777;                                // Length of arrays to process
         int localWorkSize = 256;                                    // Local work size dimensions
         int globalWorkSize = roundUp(localWorkSize, elementCount);  // rounded up to the nearest multiple of the localWorkSize
@@ -58,7 +57,7 @@ public class HelloJOCL {
         long time = nanoTime();
         queue.putWriteBuffer(clBufferA, false)
              .putWriteBuffer(clBufferB, false)
-             .putNDRangeKernel(kernel, 1, 0, globalWorkSize, localWorkSize)
+             .put1DRangeKernel(kernel, 0, globalWorkSize, localWorkSize)
              .putReadBuffer(clBufferC, true);
         time = nanoTime() - time;
 
@@ -69,8 +68,8 @@ public class HelloJOCL {
         out.println("a+b=c results snapshot: ");
         for(int i = 0; i < 10; i++)
             out.print(clBufferC.buffer.get() + ", ");
-        out.println("...; " + clBufferC.buffer.remaining()/SIZEOF_FLOAT + " more");
-        
+        out.println("...; " + clBufferC.buffer.remaining() + " more");
+
         out.println("computation took: "+(time/1000000)+"ms");
 
     }
