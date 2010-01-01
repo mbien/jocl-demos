@@ -2,7 +2,7 @@
 /**
 * animated 2D sine pattern.
 */
-__kernel void sineWave(__global float4 * vertex, int size, float time) {
+kernel void sineWave(global float4 * vertex, int size, float time) {
 
     unsigned int x = get_global_id(0);
     unsigned int y = get_global_id(1);

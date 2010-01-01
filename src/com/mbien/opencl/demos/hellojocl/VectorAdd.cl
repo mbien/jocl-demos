@@ -1,6 +1,6 @@
 
     // OpenCL Kernel Function for element by element vector addition
-    __kernel void VectorAdd(__global const float* a, __global const float* b, __global float* c, int numElements) {
+    kernel void VectorAdd(global const float* a, global const float* b, global float* c, int numElements) {
 
         // get index into global data array
         int iGID = get_global_id(0);

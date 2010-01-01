@@ -2,8 +2,7 @@ package com.mbien.opencl.demos.joglinterop;
 
 import com.mbien.opencl.CLBuffer;
 import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLContext;
-import com.mbien.opencl.CLException;
+import com.mbien.opencl.CLGLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
 import com.sun.opengl.util.Animator;
@@ -26,7 +25,7 @@ import javax.swing.SwingUtilities;
 import static com.sun.opengl.util.BufferUtil.*;
 
 /**
- * Sample for interoperability between JOCL and JOGL.
+ * JOCL - JOGL interoperability example.
  * @author Michael Bien
  */
 public class GLCLInteroperabilityDemo implements GLEventListener {
@@ -47,17 +46,20 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
     private final UserSceneInteraction usi;
 
-    private CLContext clContext;
+    private CLGLContext clContext;
     private CLKernel kernel;
     private CLCommandQueue commandQueue;
     private CLBuffer<FloatBuffer> clBuffer;
 
     private float step = 0;
 
-    public GLCLInteroperabilityDemo() throws IOException {
+    private boolean initialized = false;
+
+    public GLCLInteroperabilityDemo() {
 
         this.usi = new UserSceneInteraction();
 
+        // create direct memory buffers
         vb = newFloatBuffer(MESH_SIZE * MESH_SIZE * 4);
         ib = newIntBuffer((MESH_SIZE - 1) * (MESH_SIZE - 1) * 2 * 3);
 
@@ -69,12 +71,12 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
             for (int w = 0; w < MESH_SIZE - 1; w++) {
 
                 // 0 - 3 - 2
-                ib.put(w * 6 + h * (MESH_SIZE - 1) * 6,      w + (h) * (MESH_SIZE)        );
-                ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 1,  w + (h) * (MESH_SIZE) + 1    );
+                ib.put(w * 6 + h * (MESH_SIZE - 1) * 6,      w + (h    ) * (MESH_SIZE)    );
+                ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 1,  w + (h    ) * (MESH_SIZE) + 1);
                 ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 2,  w + (h + 1) * (MESH_SIZE) + 1);
 
                 // 0 - 2 - 1
-                ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 3,  w + (h) * (MESH_SIZE)        );
+                ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 3,  w + (h    ) * (MESH_SIZE)    );
                 ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 4,  w + (h + 1) * (MESH_SIZE) + 1);
                 ib.put(w * 6 + h * (MESH_SIZE - 1) * 6 + 5,  w + (h + 1) * (MESH_SIZE)    );
 
@@ -132,20 +134,31 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
         gl.glGenBuffers(glObjects.length, glObjects, 0);
 
-        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
-        gl.glBufferData(GL2.GL_ELEMENT_ARRAY_BUFFER, ib.capacity() * SIZEOF_INT, ib, GL2.GL_STATIC_DRAW);
-        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, 0);
+//        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
+//        gl.glBufferData(GL2.GL_ELEMENT_ARRAY_BUFFER, ib.capacity() * SIZEOF_INT, ib, GL2.GL_STATIC_DRAW);
+//        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
         gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
             gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
             gl.glBufferData(GL2.GL_ARRAY_BUFFER, vb.capacity() * SIZEOF_FLOAT, vb, GL2.GL_DYNAMIC_DRAW);
-            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
+//            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
         gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
 
-        // OpenCL
+        gl.glFinish();
+        initCL(drawable);
+
+        pushPerspectiveView(gl);
+
+        // start rendering thread
+        Animator animator = new Animator(drawable);
+        animator.start();
+    }
+
+    private void initCL(GLAutoDrawable drawable) {
+
         CLProgram program;
         try {
-            clContext = CLContext.create();
+            clContext = CLGLContext.create(drawable.getContext());
             program = clContext.createProgram(getClass().getResourceAsStream("JoglInterop.cl"));
             program.build();
             System.out.println(program.getBuildLog());
@@ -156,24 +169,21 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
         commandQueue = clContext.getMaxFlopsDevice().createCommandQueue();
 
-        kernel = program.getCLKernel("sineWave");
-//        clBuffer = clContext.createFromGLBuffer(vb, glObjects[VERTICES], CLBuffer.Mem.WRITE_ONLY);
-        clBuffer = clContext.createBuffer(vb, CLBuffer.Mem.WRITE_ONLY);
-        kernel.setArg(0, clBuffer);
-        kernel.setArg(1, MESH_SIZE);
+        clBuffer = clContext.createFromGLBuffer(vb, glObjects[VERTICES], CLBuffer.Mem.WRITE_ONLY);
 
-        pushPerspectiveView(gl);
+        kernel = program.getCLKernel("sineWave")
+                        .setArg(0, clBuffer)
+                        .setArg(1, MESH_SIZE);
 
-        // start rendering thread
-        Animator animator = new Animator(drawable);
-        animator.start();
+//        computeHeightfield(drawable.getGL().getGL2());
+
+        System.out.println("cl initialised");
     }
+
 
     public void display(GLAutoDrawable drawable) {
 
         GL2 gl = drawable.getGL().getGL2();
-
-        compute(gl);
 
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl.glLoadIdentity();
@@ -185,38 +195,31 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
             gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
             gl.glVertexPointer(4, GL2.GL_FLOAT, 0, 0);
 
-            gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
-            gl.glDrawElements(GL2.GL_TRIANGLES, ib.capacity(), GL2.GL_UNSIGNED_INT, 0);
+//            gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
+//            gl.glDrawElements(GL2.GL_TRIANGLES, ib.capacity(), GL2.GL_UNSIGNED_INT, 0);
 
-//            gl.glDrawArrays(GL2.GL_POINTS, 0, vb.capacity()/4);
+            gl.glDrawArrays(GL2.GL_POINTS, 0, vb.capacity()/4);
 
-            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
+//            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
 
         gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
 
-
+        gl.glFinish();
+        computeHeightfield();
+        
     }
 
-    private void compute(GL2 gl) {
+    /*
+     * Computes a heightfield using a OpenCL kernel.
+     */
+    private void computeHeightfield() {
 
-        // not yet supported by OpenCL implementation
-//        commandQueue.putAcquireGLObject(clBuffer.ID);
+        kernel.setArg(2, step += 0.05f);
 
-        //start computation
-        kernel.setArg(2, step += 0.1f);
-        commandQueue.putNDRangeKernel(kernel, 2, null, new long[] {MESH_SIZE, MESH_SIZE}, null);
-
-//        commandQueue.putReleaseGLObject(clBuffer.ID);
-
-        // workaround until full OpenCL-OpenGL interop. is supported
-        // copy from cl buffer to gl vbo
-        gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
-        gl.glVertexPointer(4, GL2.GL_FLOAT, 0, 0);
-
-        //blocking read of resultbuffer
-        commandQueue.putReadBuffer(clBuffer, vb, true);
-
-        gl.glBufferData(GL2.GL_ARRAY_BUFFER, vb.capacity() * SIZEOF_FLOAT, vb, GL2.GL_DYNAMIC_DRAW);
+        commandQueue.putAcquireGLObject(clBuffer.ID)
+                    .put2DRangeKernel(kernel, 0, 0, MESH_SIZE, MESH_SIZE, 0, 0)
+                    .putReleaseGLObject(clBuffer.ID)
+                    .finish();
 
     }
 
@@ -257,11 +260,11 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     public void dispose(GLAutoDrawable drawable) {  }
 
     private void deinit() {
-        clContext.release();
+        clContext.release(); // only for demonstration purposes, JVM will cleanup on exit anyway
         System.exit(0);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         new GLCLInteroperabilityDemo();
     }
 
