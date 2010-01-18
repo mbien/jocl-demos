@@ -10,7 +10,7 @@ import java.nio.FloatBuffer;
 import java.util.Random;
 
 import static java.lang.System.*;
-import static com.mbien.opencl.CLBuffer.Mem.*;
+import static com.mbien.opencl.CLMemory.Mem.*;
 
 /**
  * Hello Java OpenCL example. Adds all elements of buffer A to buffer B
@@ -37,18 +37,16 @@ public class HelloJOCL {
         CLBuffer<FloatBuffer> clBufferC = context.createFloatBuffer(globalWorkSize, WRITE_ONLY);
 
         out.println("used device memory: "
-            + (clBufferA.buffer.capacity()+clBufferB.buffer.capacity()+clBufferC.buffer.capacity())*4/1000000 +"MB");
+            + (clBufferA.getSize()+clBufferB.getSize()+clBufferC.getSize())/1000000 +"MB");
 
         // fill read buffers with random numbers (just to have test data; seed is fixed -> results will not change between runs).
-        fillBuffer(clBufferA.buffer, 12345);
-        fillBuffer(clBufferB.buffer, 67890);
+        fillBuffer(clBufferA.getBuffer(), 12345);
+        fillBuffer(clBufferB.getBuffer(), 67890);
 
-        // get a reference to the kernel functon with the name 'VectorAdd' and map the buffers to its input parameters.
-        CLKernel kernel = program.getCLKernels().get("VectorAdd");
-        kernel.setArg(0, clBufferA)
-              .setArg(1, clBufferB)
-              .setArg(2, clBufferC)
-              .setArg(3, elementCount);
+        // get a reference to the kernel functon with the name 'VectorAdd'
+        // and map the buffers to its input parameters.
+        CLKernel kernel = program.getCLKernel("VectorAdd");
+        kernel.putArgs(clBufferA, clBufferB, clBufferC).putArg(elementCount);
 
         // create command queue on fastest device.
         CLCommandQueue queue = context.getMaxFlopsDevice().createCommandQueue();
@@ -67,8 +65,8 @@ public class HelloJOCL {
         // print first few elements of the resulting buffer to the console.
         out.println("a+b=c results snapshot: ");
         for(int i = 0; i < 10; i++)
-            out.print(clBufferC.buffer.get() + ", ");
-        out.println("...; " + clBufferC.buffer.remaining() + " more");
+            out.print(clBufferC.getBuffer().get() + ", ");
+        out.println("...; " + clBufferC.getBuffer().remaining() + " more");
 
         out.println("computation took: "+(time/1000000)+"ms");
 
