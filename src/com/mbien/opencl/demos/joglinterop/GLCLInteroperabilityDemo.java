@@ -176,7 +176,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         System.out.println("cl buffer type: " + clBuffer.getGLObjectType());
         System.out.println("shared with gl buffer: " + clBuffer.getGLObjectID());
 
-        kernel = program.getCLKernel("sineWave")
+        kernel = program.createCLKernel("sineWave")
                         .putArg(clBuffer)
                         .putArg(MESH_SIZE)
                         .rewind();

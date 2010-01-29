@@ -7,14 +7,14 @@ kernel void mandelbrot(
         global uint *output,
         const int width, const int height,
         const float x0, const float y0,
-        const float x1, const float y1,
+        const float rangeX, const float rangeY,
         global uint *colorMap, const int colorMapSize, const int maxIterations) {
 
     unsigned int ix = get_global_id(0);
     unsigned int iy = get_global_id(1);
 
-    float r = x0 + ix * (x1-x0) / width;
-    float i = y0 + iy * (y1-y0) / height;
+    float r = x0 + ix * rangeX / width;
+    float i = y0 + iy * rangeY / height;
 
     float x = 0;
     float y = 0;

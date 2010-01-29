@@ -2,15 +2,20 @@ package com.mbien.opencl.demos.fractal;
 
 import com.mbien.opencl.CLBuffer;
 import com.mbien.opencl.CLCommandQueue;
+import com.mbien.opencl.CLDevice;
 import com.mbien.opencl.CLException;
 import com.mbien.opencl.CLGLBuffer;
 import com.mbien.opencl.CLGLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
 import com.mbien.opencl.CLProgram.CompilerOptions;
+import com.sun.opengl.util.awt.TextRenderer;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Point;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -34,22 +39,29 @@ import static com.sun.gluegen.runtime.BufferFactory.*;
 import static javax.media.opengl.GL2.*;
 import static com.mbien.opencl.CLMemory.Mem.*;
 import static com.mbien.opencl.CLDevice.Type.*;
+import static java.lang.Math.*;
 
 /**
- * Computes the Mandelbrot set with OpenCL and renders the result with OpenGL.
+ * Computes the Mandelbrot set with OpenCL using multiple GPUs and renders the result with OpenGL.
  * A shared PBO is used as storage for the fractal image.
  * http://en.wikipedia.org/wiki/Mandelbrot_set
  * @author Michael Bien
  */
-public class Fractal implements GLEventListener {
+public class MultiDeviceFractal implements GLEventListener {
+
+    // max number of used GPUs
+    private static final int MAX_PARRALLELISM_LEVEL = 8;
+
+    // max per pixel iterations to compute the fractal
+    private static final int MAX_ITERATIONS         = 500;
 
     private GLCanvas canvas;
 
     private CLGLContext clContext;
-    private CLCommandQueue commandQueue;
-    private CLKernel kernel;
+    private CLCommandQueue[] queues;
+    private CLKernel[] kernels;
 
-    private CLGLBuffer<IntBuffer> pboBuffer;
+    private CLGLBuffer<IntBuffer>[] pboBuffers;
 
     private int width  = 0;
     private int height = 0;
@@ -59,7 +71,14 @@ public class Fractal implements GLEventListener {
     private float maxX  = 0.6f;
     private float maxY  = 1.3f;
 
-    public Fractal(int width, int height) {
+    private int slices;
+
+    private boolean drawSeperator = false;
+    private boolean initialized = false;
+
+    private final TextRenderer textRenderer;
+
+    public MultiDeviceFractal(int width, int height) {
 
         this.width = width;
         this.height = height;
@@ -68,13 +87,15 @@ public class Fractal implements GLEventListener {
         canvas.addGLEventListener(this);
         initSceneInteraction();
 
-        JFrame frame = new JFrame("JOCL Mandelbrot Set");
+        JFrame frame = new JFrame("JOCL Multi GPU Mandelbrot Set");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         canvas.setPreferredSize(new Dimension(width, height));
         frame.add(canvas);
         frame.pack();
 
         frame.setVisible(true);
+
+        textRenderer = new TextRenderer(frame.getFont().deriveFont(Font.BOLD, 14), true, true, null, false);
     }
 
     public void init(GLAutoDrawable drawable) {
@@ -98,29 +119,41 @@ public class Fractal implements GLEventListener {
 
     private void initCL(GLContext glCtx){
         try {
-            clContext = CLGLContext.create(glCtx);
+            // create context managing all available GPUs
+            clContext = CLGLContext.create(glCtx, GPU);
 
             // load and build program
             CLProgram program = clContext.createProgram(getClass().getResourceAsStream("Mandelbrot.cl"))
                                          .build(CompilerOptions.FAST_RELAXED_MATH);
 
-            // setup colormap and create command queue on fastest GPU
-            CLBuffer<IntBuffer> colorMap = clContext.createIntBuffer(32*2, READ_ONLY);
-            initColorMap(colorMap.getBuffer(), 32, Color.BLUE, Color.GREEN, Color.RED);
+            CLDevice[] devices = clContext.getCLDevices();
 
-            commandQueue = clContext.getMaxFlopsDevice(GPU).createCommandQueue()
-              .putWriteBuffer(colorMap, true); // blocking upload
+            slices = min(devices.length, MAX_PARRALLELISM_LEVEL);
 
-            // init kernel with constants
-            kernel = program.getCLKernel("mandelbrot")
-              .setArg(7, colorMap)
-              .setArg(8, colorMap.getBuffer().capacity())
-              .setArg(9, 200);  // maxIterations
+            // create command queues for every GPU, setup colormap and init kernels
+            queues = new CLCommandQueue[slices];
+            kernels = new CLKernel[slices];
+
+            for (int i = 0; i < slices; i++) {
+
+                CLBuffer<IntBuffer> colorMap = clContext.createIntBuffer(32*2, READ_ONLY);
+                initColorMap(colorMap.getBuffer(), 32, Color.BLUE, Color.GREEN, Color.RED);
+
+                // create command queue and upload color map buffer on each used device
+                queues[i] = devices[i].createCommandQueue().putWriteBuffer(colorMap, true); // blocking upload
+
+                // init kernel with constants
+                kernels[i] = program.createCLKernel("mandelbrot")
+                  .setArg(7, colorMap)
+                  .setArg(8, colorMap.getBuffer().capacity())
+                  .setArg(9, MAX_ITERATIONS);
+
+            }
 
         } catch (IOException ex) {
-            Logger.getLogger(Fractal.class.getName()).log(Level.SEVERE, "can not find OpenCL program.", ex);
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, "can not find 'Mandelbrot.cl' in classpath.", ex);
         } catch (CLException ex) {
-            Logger.getLogger(Fractal.class.getName()).log(Level.SEVERE, "something went wrong, hopefully no one got hurt", ex);
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, "something went wrong, hopefully no one got hurt", ex);
         }
 
     }
@@ -164,51 +197,84 @@ public class Fractal implements GLEventListener {
 
         gl.glMatrixMode(GL_PROJECTION);
         gl.glLoadIdentity();
-        gl.glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+        gl.glOrtho(0.0, width, 0.0, height, 0.0, 1.0);
     }
 
+    @SuppressWarnings("unchecked")
     private void initPBO(GL gl) {
 
-        int[] pbo = new int[1];
-        gl.glGenBuffers(1, pbo, 0);
+        pboBuffers = new CLGLBuffer[kernels.length];
 
-        // setup empty PBO
-        gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[0]);
-        gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * SIZEOF_INT, null, GL_STREAM_DRAW);
-        gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        int[] pbo = new int[pboBuffers.length];
+        gl.glGenBuffers(pboBuffers.length, pbo, 0);
 
-        pboBuffer = clContext.createFromGLBuffer(null, pbo[0], WRITE_ONLY);
+        // setup one empty PBO per slice
+        for (int i = 0; i < slices; i++) {
 
+            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[i]);
+            gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, width*height * SIZEOF_INT / slices, null, GL_STREAM_DRAW);
+            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+            pboBuffers[i] = clContext.createFromGLBuffer(null, pbo[i], WRITE_ONLY);
+        }
+        
+        initialized = true;
     }
 
     public void display(GLAutoDrawable drawable) {
+        if(!initialized) {
+            initPBO(drawable.getGL());
+        }
         compute();
         render(drawable.getGL().getGL2());
     }
 
+    // OpenCL
     private void compute() {
 
-        kernel.putArg(pboBuffer)
-              .putArg(width).putArg(height)
-              .putArg(minX).putArg(minY)
-              .putArg(maxX).putArg(maxY)
-              .rewind();
+        int sliceWidth = width / slices;
+        float rangeX   = (maxX - minX) / slices;
+        float rangeY   = (maxY - minY);
 
-        commandQueue.putAcquireGLObject(pboBuffer.ID)
-                    .put2DRangeKernel(kernel, 0, 0, width, height, 0, 0)
-                    .putReleaseGLObject(pboBuffer.ID)
-                    .putBarrier();
+        for (int i = 0; i < slices; i++) {
+
+            kernels[i].putArg(pboBuffers[i])
+                  .putArg(sliceWidth).putArg(height)
+                  .putArg(minX + rangeX*i).putArg(minY)
+                  .putArg(       rangeX  ).putArg(rangeY)
+                  .rewind();
+
+            queues[i].putAcquireGLObject(pboBuffers[i].ID)
+                     .put2DRangeKernel(kernels[i], 0, 0, sliceWidth, height, 0, 0)
+                     .putReleaseGLObject(pboBuffers[i].ID);
+        }
+
     }
 
+    // OpenGL
     private void render(GL2 gl) {
 
         gl.glClear(GL_COLOR_BUFFER_BIT);
 
-        gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboBuffer.getGLObjectID());
-            gl.glRasterPos2i(0, 0);
-            gl.glDrawPixels(width, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+        //draw slices
+        int sliceWidth = width / slices;
+
+        for (int i = 0; i < slices; i++) {
+
+            int seperatorOffset = drawSeperator?i:0;
+
+            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboBuffers[i].GLID);
+            gl.glRasterPos2i(sliceWidth*i + seperatorOffset, 0);
+
+            gl.glDrawPixels(sliceWidth, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+
+        }
         gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
+        //draw info text
+        textRenderer.beginRendering(width, height, false);
+        textRenderer.draw("#GPUs: "+slices, 10, 10);
+        textRenderer.endRendering();
     }
 
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
@@ -219,7 +285,9 @@ public class Fractal implements GLEventListener {
         this.width = width;
         this.height = height;
 
-        pboBuffer.release();
+        for (CLGLBuffer<IntBuffer> buffer : pboBuffers) {
+            buffer.release();
+        }
 
         initPBO(drawable.getGL());
         initView(drawable.getGL().getGL2(), drawable.getWidth(), drawable.getHeight());
@@ -227,7 +295,7 @@ public class Fractal implements GLEventListener {
 
     private void initSceneInteraction() {
 
-        MouseAdapter adapter = new MouseAdapter() {
+        MouseAdapter mouseAdapter = new MouseAdapter() {
 
             Point lastpos = new Point();
 
@@ -268,15 +336,32 @@ public class Fractal implements GLEventListener {
                 minX += deltaX+offsetX;
                 minY += deltaY-offsetY;
 
-                maxX    +=-deltaX+offsetX;
-                maxY    +=-deltaY-offsetY;
+                maxX +=-deltaX+offsetX;
+                maxY +=-deltaY-offsetY;
 
                 canvas.display();
             }
         };
 
-        canvas.addMouseMotionListener(adapter);
-        canvas.addMouseWheelListener(adapter);
+        KeyAdapter keyAdapter = new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    drawSeperator = !drawSeperator;
+                }else if(e.getKeyChar() > '0' && e.getKeyChar() < '9') {
+                    int number = e.getKeyChar()-'0';
+                    slices = min(number, min(queues.length, MAX_PARRALLELISM_LEVEL));
+                    initialized = false;
+                }
+                canvas.display();
+            }
+
+        };
+
+        canvas.addMouseMotionListener(mouseAdapter);
+        canvas.addMouseWheelListener(mouseAdapter);
+        canvas.addKeyListener(keyAdapter);
     }
 
     public void dispose(GLAutoDrawable drawable) {
@@ -284,9 +369,8 @@ public class Fractal implements GLEventListener {
 
     public static void main(String args[]) {
         SwingUtilities.invokeLater(new Runnable() {
-
             public void run() {
-                new Fractal(500, 500);
+                new MultiDeviceFractal(512, 512);
             }
         });
     }

@@ -45,7 +45,7 @@ public class HelloJOCL {
 
         // get a reference to the kernel functon with the name 'VectorAdd'
         // and map the buffers to its input parameters.
-        CLKernel kernel = program.getCLKernel("VectorAdd");
+        CLKernel kernel = program.createCLKernel("VectorAdd");
         kernel.putArgs(clBufferA, clBufferB, clBufferC).putArg(elementCount);
 
         // create command queue on fastest device.
