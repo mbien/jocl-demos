@@ -3,6 +3,8 @@ package com.mbien.opencl.demos.fractal;
 import com.mbien.opencl.CLBuffer;
 import com.mbien.opencl.CLCommandQueue;
 import com.mbien.opencl.CLDevice;
+import com.mbien.opencl.CLEvent;
+import com.mbien.opencl.CLEventList;
 import com.mbien.opencl.CLException;
 import com.mbien.opencl.CLGLBuffer;
 import com.mbien.opencl.CLGLContext;
@@ -38,6 +40,8 @@ import javax.swing.SwingUtilities;
 import static com.sun.gluegen.runtime.BufferFactory.*;
 import static javax.media.opengl.GL2.*;
 import static com.mbien.opencl.CLMemory.Mem.*;
+import static com.mbien.opencl.CLEvent.ProfilingCommand.*;
+import static com.mbien.opencl.CLCommandQueue.Mode.*;
 import static com.mbien.opencl.CLDevice.Type.*;
 import static java.lang.Math.*;
 
@@ -60,7 +64,7 @@ public class MultiDeviceFractal implements GLEventListener {
     private CLGLContext clContext;
     private CLCommandQueue[] queues;
     private CLKernel[] kernels;
-
+    private CLEventList probes;
     private CLGLBuffer<IntBuffer>[] pboBuffers;
 
     private int width  = 0;
@@ -133,6 +137,7 @@ public class MultiDeviceFractal implements GLEventListener {
             // create command queues for every GPU, setup colormap and init kernels
             queues = new CLCommandQueue[slices];
             kernels = new CLKernel[slices];
+            probes = new CLEventList(slices);
 
             for (int i = 0; i < slices; i++) {
 
@@ -140,7 +145,7 @@ public class MultiDeviceFractal implements GLEventListener {
                 initColorMap(colorMap.getBuffer(), 32, Color.BLUE, Color.GREEN, Color.RED);
 
                 // create command queue and upload color map buffer on each used device
-                queues[i] = devices[i].createCommandQueue().putWriteBuffer(colorMap, true); // blocking upload
+                queues[i] = devices[i].createCommandQueue(PROFILING_MODE).putWriteBuffer(colorMap, true); // blocking upload
 
                 // init kernel with constants
                 kernels[i] = program.createCLKernel("mandelbrot")
@@ -236,17 +241,22 @@ public class MultiDeviceFractal implements GLEventListener {
         float rangeX   = (maxX - minX) / slices;
         float rangeY   = (maxY - minY);
 
+        // release all old events, you can't reuse events in OpenCL
+        probes.release();
+
         for (int i = 0; i < slices; i++) {
 
             kernels[i].putArg(pboBuffers[i])
-                  .putArg(sliceWidth).putArg(height)
-                  .putArg(minX + rangeX*i).putArg(minY)
-                  .putArg(       rangeX  ).putArg(rangeY)
-                  .rewind();
+                      .putArg(sliceWidth).putArg(height)
+                      .putArg(minX + rangeX*i).putArg(minY)
+                      .putArg(       rangeX  ).putArg(rangeY)
+                      .rewind();
 
+            // aquire GL objects, and enqueue a kernel with a probe from the list
             queues[i].putAcquireGLObject(pboBuffers[i].ID)
-                     .put2DRangeKernel(kernels[i], 0, 0, sliceWidth, height, 0, 0)
+                     .put2DRangeKernel(kernels[i], 0, 0, sliceWidth, height, 0, 0, probes)
                      .putReleaseGLObject(pboBuffers[i].ID);
+
         }
 
     }
@@ -273,7 +283,14 @@ public class MultiDeviceFractal implements GLEventListener {
 
         //draw info text
         textRenderer.beginRendering(width, height, false);
-        textRenderer.draw("#GPUs: "+slices, 10, 10);
+
+            for (int i = 0; i < slices; i++) {
+                CLEvent event = probes.getEvent(i);
+                long start = event.getProfilingInfo(START);
+                long end = event.getProfilingInfo(END);
+                textRenderer.draw("GPU"+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, 10+16*(slices-i));
+            }
+
         textRenderer.endRendering();
     }
 
