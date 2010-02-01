@@ -1,30 +1,37 @@
+#ifdef DOUBLE_FP
+    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+    typedef double varfloat;
+#else
+    typedef float varfloat;
+#endif
+
 /**
  * For a description of this algorithm please refer to
  * http://en.wikipedia.org/wiki/Mandelbrot_set
  * @author Michael Bien
  */
 kernel void mandelbrot(
-        global uint *output,
-        const int width, const int height,
-        const float x0, const float y0,
-        const float rangeX, const float rangeY,
-        global uint *colorMap, const int colorMapSize, const int maxIterations) {
+        const int width,        const int height,
+        const varfloat x0,      const varfloat y0,
+        const varfloat rangeX,  const varfloat rangeY,
+        global uint *output,    global uint *colorMap,
+        const int colorMapSize, const int maxIterations) {
 
     unsigned int ix = get_global_id(0);
     unsigned int iy = get_global_id(1);
 
-    float r = x0 + ix * rangeX / width;
-    float i = y0 + iy * rangeY / height;
+    varfloat r = x0 + ix * rangeX / width;
+    varfloat i = y0 + iy * rangeY / height;
 
-    float x = 0;
-    float y = 0;
+    varfloat x = 0;
+    varfloat y = 0;
 
-    float magnitudeSquared = 0;
+    varfloat magnitudeSquared = 0;
     int iteration = 0;
 
     while (magnitudeSquared < 4 && iteration < maxIterations) {
-        float x2 = x*x;
-        float y2 = y*y;
+        varfloat x2 = x*x;
+        varfloat y2 = y*y;
         y = 2 * x * y + i;
         x = x2 - y2 + r;
         magnitudeSquared = x2+y2;
@@ -34,7 +41,7 @@ kernel void mandelbrot(
     if (iteration == maxIterations)  {
         output[iy * width + ix] = 0;
     }else {
-        float alpha = (float)iteration / maxIterations;
+        varfloat alpha = (varfloat)iteration / maxIterations;
         int colorIndex = (int)(alpha * colorMapSize);
         output[iy * width + ix] = colorMap[colorIndex];
       // monochrom

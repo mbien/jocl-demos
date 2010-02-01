@@ -47,8 +47,15 @@ import static java.lang.Math.*;
 
 /**
  * Computes the Mandelbrot set with OpenCL using multiple GPUs and renders the result with OpenGL.
- * A shared PBO is used as storage for the fractal image.
+ * A shared PBO is used as storage for the fractal image.<br/>
  * http://en.wikipedia.org/wiki/Mandelbrot_set
+ * <p>
+ * controls:<br/>
+ * keys 1-9 control parallelism level<br/>
+ * space enables/disables slice seperator<br/>
+ * 'd' toggles between 32/64bit floatingpoint precision<br/>
+ * mouse/mousewheel to drag and zoom<br/>
+ * </p>
  * @author Michael Bien
  */
 public class MultiDeviceFractal implements GLEventListener {
@@ -64,21 +71,25 @@ public class MultiDeviceFractal implements GLEventListener {
     private CLGLContext clContext;
     private CLCommandQueue[] queues;
     private CLKernel[] kernels;
+    private CLProgram program;
     private CLEventList probes;
     private CLGLBuffer<?>[] pboBuffers;
+    private CLBuffer<IntBuffer>[] colorMap;
 
     private int width  = 0;
     private int height = 0;
 
-    private float minX = -2f;
-    private float minY = -1.2f;
-    private float maxX  = 0.6f;
-    private float maxY  = 1.3f;
+    private double minX = -2f;
+    private double minY = -1.2f;
+    private double maxX  = 0.6f;
+    private double maxY  = 1.3f;
 
     private int slices;
 
-    private boolean drawSeperator = false;
-    private boolean initialized = false;
+    private boolean drawSeperator;
+    private boolean doublePrecision;
+    private boolean buffersInitialized;
+    private boolean rebuild;
 
     private final TextRenderer textRenderer;
 
@@ -118,17 +129,13 @@ public class MultiDeviceFractal implements GLEventListener {
         initView(gl, drawable.getWidth(), drawable.getHeight());
 
         initPBO(gl);
-
+        setKernelConstants();
     }
 
     private void initCL(GLContext glCtx){
         try {
             // create context managing all available GPUs
             clContext = CLGLContext.create(glCtx, GPU);
-
-            // load and build program
-            CLProgram program = clContext.createProgram(getClass().getResourceAsStream("Mandelbrot.cl"))
-                                         .build(CompilerOptions.FAST_RELAXED_MATH);
 
             CLDevice[] devices = clContext.getCLDevices();
 
@@ -138,22 +145,21 @@ public class MultiDeviceFractal implements GLEventListener {
             queues = new CLCommandQueue[slices];
             kernels = new CLKernel[slices];
             probes = new CLEventList(slices);
+            colorMap = new CLBuffer[slices];
 
             for (int i = 0; i < slices; i++) {
 
-                CLBuffer<IntBuffer> colorMap = clContext.createIntBuffer(32*2, READ_ONLY);
-                initColorMap(colorMap.getBuffer(), 32, Color.BLUE, Color.GREEN, Color.RED);
+                colorMap[i] = clContext.createIntBuffer(32*2, READ_ONLY);
+                initColorMap(colorMap[i].getBuffer(), 32, Color.BLUE, Color.GREEN, Color.RED);
 
                 // create command queue and upload color map buffer on each used device
-                queues[i] = devices[i].createCommandQueue(PROFILING_MODE).putWriteBuffer(colorMap, true); // blocking upload
-
-                // init kernel with constants
-                kernels[i] = program.createCLKernel("mandelbrot")
-                  .setArg(7, colorMap)
-                  .setArg(8, colorMap.getBuffer().capacity())
-                  .setArg(9, MAX_ITERATIONS);
+                queues[i] = devices[i].createCommandQueue(PROFILING_MODE).putWriteBuffer(colorMap[i], true); // blocking upload
 
             }
+
+            // load and build program
+            program = clContext.createProgram(getClass().getResourceAsStream("Mandelbrot.cl"));
+            buildProgram();
 
         } catch (IOException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, "can not find 'Mandelbrot.cl' in classpath.", ex);
@@ -231,15 +237,71 @@ public class MultiDeviceFractal implements GLEventListener {
             gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
             pboBuffers[i] = clContext.createFromGLBuffer(null, pbo[i], WRITE_ONLY);
+
         }
-        
-        initialized = true;
+
+        buffersInitialized = true;
     }
 
+    private void buildProgram() {
+
+        /*
+         * workaround: The driver keeps using the old binaries for some reason.
+         * to solve this we simple create a new program and release the old.
+         * however rebuilding programs should be possible -> remove when drivers are fixed.
+         */
+        if(program != null && rebuild) {
+            String source = program.getSource();
+            program.release();
+            program = clContext.createProgram(source);
+        }
+
+        // disable 64bit floating point math if not available
+        if(doublePrecision) {
+            for (CLDevice device : program.getCLDevices()) {
+                if(!device.isDoubleFPAvailable()) {
+                    doublePrecision = false;
+                    break;
+                }
+            }
+        }
+
+        if(doublePrecision) {
+            program.build(CompilerOptions.FAST_RELAXED_MATH, "-D DOUBLE_FP");
+        }else{
+            program.build(CompilerOptions.FAST_RELAXED_MATH);
+        }
+        rebuild = false;
+
+        for (int i = 0; i < kernels.length; i++) {
+            // init kernel with constants
+            kernels[i] = program.createCLKernel("mandelbrot");
+        }
+
+    }
+
+    // init kernels with constants
+    private void setKernelConstants() {
+        for (int i = 0; i < slices; i++) {
+            kernels[i].setForce32BitArgs(!doublePrecision)
+                      .setArg(6, pboBuffers[i])
+                      .setArg(7, colorMap[i])
+                      .setArg(8, colorMap[i].getBuffer().capacity())
+                      .setArg(9, MAX_ITERATIONS);
+        }
+    }
+
+    // rendering cycle
     public void display(GLAutoDrawable drawable) {
         GL gl = drawable.getGL();
-        if(!initialized) {
+
+        if(!buffersInitialized) {
             initPBO(gl);
+            setKernelConstants();
+        }
+        if(rebuild) {
+            buildProgram();
+            setKernelConstants();
         }
         // make sure GL does not use our objects before we start computeing
         gl.glFinish();
@@ -252,8 +314,8 @@ public class MultiDeviceFractal implements GLEventListener {
     private void compute() {
 
         int sliceWidth = width / slices;
-        float rangeX   = (maxX - minX) / slices;
-        float rangeY   = (maxY - minY);
+        double rangeX   = (maxX - minX) / slices;
+        double rangeY   = (maxY - minY);
 
         // release all old events, you can't reuse events in OpenCL
         probes.release();
@@ -261,9 +323,8 @@ public class MultiDeviceFractal implements GLEventListener {
         // start computation
         for (int i = 0; i < slices; i++) {
 
-            kernels[i].putArg(pboBuffers[i])
-                      .putArg(sliceWidth).putArg(height)
-                      .putArg(minX + rangeX*i).putArg(minY)
+            kernels[i].putArg(     sliceWidth).putArg(height)
+                      .putArg(minX + rangeX*i).putArg(  minY)
                       .putArg(       rangeX  ).putArg(rangeY)
                       .rewind();
 
@@ -304,11 +365,13 @@ public class MultiDeviceFractal implements GLEventListener {
         //draw info text
         textRenderer.beginRendering(width, height, false);
 
+            textRenderer.draw("precision: "+ (doublePrecision?"64bit":"32bit"), 10, height-15);
+
             for (int i = 0; i < slices; i++) {
                 CLEvent event = probes.getEvent(i);
                 long start = event.getProfilingInfo(START);
                 long end = event.getProfilingInfo(END);
-                textRenderer.draw("GPU"+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, 10+16*(slices-i));
+                textRenderer.draw("GPU"+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, height-(20+16*(slices-i)));
             }
 
         textRenderer.endRendering();
@@ -323,6 +386,7 @@ public class MultiDeviceFractal implements GLEventListener {
         this.height = height;
 
         initPBO(drawable.getGL());
+
         initView(drawable.getGL().getGL2(), drawable.getWidth(), drawable.getHeight());
     }
 
@@ -335,8 +399,8 @@ public class MultiDeviceFractal implements GLEventListener {
             @Override
             public void mouseDragged(MouseEvent e) {
                 
-                float offsetX = (lastpos.x - e.getX()) * (maxX - minX) / width;
-                float offsetY = (lastpos.y - e.getY()) * (maxY - minY) / height;
+                double offsetX = (lastpos.x - e.getX()) * (maxX - minX) / width;
+                double offsetY = (lastpos.y - e.getY()) * (maxY - minY) / height;
 
                 minX += offsetX;
                 minY -= offsetY;
@@ -359,12 +423,12 @@ public class MultiDeviceFractal implements GLEventListener {
             public void mouseWheelMoved(MouseWheelEvent e) {
                 float rotation = e.getWheelRotation() / 25.0f;
 
-                float deltaX = rotation * (maxX - minX);
-                float deltaY = rotation * (maxY - minY);
+                double deltaX = rotation * (maxX - minX);
+                double deltaY = rotation * (maxY - minY);
 
                 // offset for "zoom to cursor"
-                float offsetX = (e.getX() / (float)width - 0.5f) * deltaX * 2;
-                float offsetY = (e.getY() / (float)height- 0.5f) * deltaY * 2;
+                double offsetX = (e.getX() / (float)width - 0.5f) * deltaX * 2;
+                double offsetY = (e.getY() / (float)height- 0.5f) * deltaY * 2;
 
                 minX += deltaX+offsetX;
                 minY += deltaY-offsetY;
@@ -385,7 +449,10 @@ public class MultiDeviceFractal implements GLEventListener {
                 }else if(e.getKeyChar() > '0' && e.getKeyChar() < '9') {
                     int number = e.getKeyChar()-'0';
                     slices = min(number, min(queues.length, MAX_PARRALLELISM_LEVEL));
-                    initialized = false;
+                    buffersInitialized = false;
+                }else if(e.getKeyCode() == KeyEvent.VK_D) {
+                    doublePrecision = !doublePrecision;
+                    rebuild = true;
                 }
                 canvas.display();
             }
