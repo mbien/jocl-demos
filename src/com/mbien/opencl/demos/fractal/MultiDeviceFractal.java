@@ -65,7 +65,7 @@ public class MultiDeviceFractal implements GLEventListener {
     private CLCommandQueue[] queues;
     private CLKernel[] kernels;
     private CLEventList probes;
-    private CLGLBuffer<IntBuffer>[] pboBuffers;
+    private CLGLBuffer<?>[] pboBuffers;
 
     private int width  = 0;
     private int height = 0;
@@ -208,10 +208,20 @@ public class MultiDeviceFractal implements GLEventListener {
     @SuppressWarnings("unchecked")
     private void initPBO(GL gl) {
 
-        pboBuffers = new CLGLBuffer[kernels.length];
+        if(pboBuffers != null) {
+            int[] oldPbos = new int[pboBuffers.length];
+            for (int i = 0; i < pboBuffers.length; i++) {
+                CLGLBuffer<?> buffer = pboBuffers[i];
+                oldPbos[i] = buffer.GLID;
+                buffer.release();
+            }
+            gl.glDeleteBuffers(oldPbos.length, oldPbos, 0);
+        }
 
-        int[] pbo = new int[pboBuffers.length];
-        gl.glGenBuffers(pboBuffers.length, pbo, 0);
+        pboBuffers = new CLGLBuffer[slices];
+
+        int[] pbo = new int[slices];
+        gl.glGenBuffers(slices, pbo, 0);
 
         // setup one empty PBO per slice
         for (int i = 0; i < slices; i++) {
@@ -227,11 +237,15 @@ public class MultiDeviceFractal implements GLEventListener {
     }
 
     public void display(GLAutoDrawable drawable) {
+        GL gl = drawable.getGL();
         if(!initialized) {
-            initPBO(drawable.getGL());
+            initPBO(gl);
         }
+        // make sure GL does not use our objects before we start computeing
+        gl.glFinish();
         compute();
-        render(drawable.getGL().getGL2());
+
+        render(gl.getGL2());
     }
 
     // OpenCL
@@ -244,6 +258,7 @@ public class MultiDeviceFractal implements GLEventListener {
         // release all old events, you can't reuse events in OpenCL
         probes.release();
 
+        // start computation
         for (int i = 0; i < slices; i++) {
 
             kernels[i].putArg(pboBuffers[i])
@@ -257,6 +272,11 @@ public class MultiDeviceFractal implements GLEventListener {
                      .put2DRangeKernel(kernels[i], 0, 0, sliceWidth, height, 0, 0, probes)
                      .putReleaseGLObject(pboBuffers[i].ID);
 
+        }
+
+        // block until done
+        for (int i = 0; i < slices; i++) {
+            queues[i].finish();
         }
 
     }
@@ -301,10 +321,6 @@ public class MultiDeviceFractal implements GLEventListener {
 
         this.width = width;
         this.height = height;
-
-        for (CLGLBuffer<IntBuffer> buffer : pboBuffers) {
-            buffer.release();
-        }
 
         initPBO(drawable.getGL());
         initView(drawable.getGL().getGL2(), drawable.getWidth(), drawable.getHeight());
