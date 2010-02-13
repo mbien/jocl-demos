@@ -6,8 +6,6 @@ import com.mbien.opencl.CLGLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
 import com.sun.opengl.util.Animator;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
@@ -102,13 +100,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         usi.init(canvas);
 
         JFrame frame = new JFrame("JOGL-JOCL Interoperability Example");
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                deinit();
-            }
-
-        });
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(canvas);
         frame.setSize(width, height);
 
@@ -261,11 +253,6 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     }
 
     public void dispose(GLAutoDrawable drawable) {  }
-
-    private void deinit() {
-        clContext.release(); // only for demonstration purposes, JVM will cleanup on exit anyway
-        System.exit(0);
-    }
 
     public static void main(String[] args) {
         new GLCLInteroperabilityDemo();
