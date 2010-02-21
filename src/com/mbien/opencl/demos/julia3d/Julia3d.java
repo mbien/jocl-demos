@@ -45,7 +45,7 @@ public class Julia3d {
         updateCamera();
 
         //setup
-        CLDevice gpu = CLPlatform.getDefault().getMaxFlopsDevice(GPU);
+        CLDevice gpu = CLPlatform.getDefault().getMaxFlopsDevice();
         context = CLContext.create(gpu);
 
         workGroupSize = 256;

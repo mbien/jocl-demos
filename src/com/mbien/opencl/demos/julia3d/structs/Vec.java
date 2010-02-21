@@ -13,11 +13,11 @@ public abstract class Vec {
   StructAccessor accessor;
 
   public static int size() {
-    if (CPU.is32Bit()) {
-      return Vec32.size();
-    } else {
+//    if (CPU.is32Bit()) {
+//      return Vec32.size();
+//    } else {
       return Vec64.size();
-    }
+//    }
   }
 
   public static Vec create() {
@@ -25,11 +25,11 @@ public abstract class Vec {
   }
 
   public static Vec create(java.nio.ByteBuffer buf) {
-    if (CPU.is32Bit()) {
-      return new Vec32(buf);
-    } else {
+//    if (CPU.is32Bit()) {
+//      return new Vec32(buf);
+//    } else {
       return new Vec64(buf);
-    }
+//    }
   }
 
   Vec(java.nio.ByteBuffer buf) {

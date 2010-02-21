@@ -13,11 +13,11 @@ public abstract class Camera {
   StructAccessor accessor;
 
   public static int size() {
-    if (CPU.is32Bit()) {
-      return Camera32.size();
-    } else {
+//    if (CPU.is32Bit()) {
+//      return Camera32.size();
+//    } else {
       return Camera64.size();
-    }
+//    }
   }
 
   public static Camera create() {
@@ -25,11 +25,11 @@ public abstract class Camera {
   }
 
   public static Camera create(java.nio.ByteBuffer buf) {
-    if (CPU.is32Bit()) {
-      return new Camera32(buf);
-    } else {
+//    if (CPU.is32Bit()) {
+//      return new Camera32(buf);
+//    } else {
       return new Camera64(buf);
-    }
+//    }
   }
 
   Camera(java.nio.ByteBuffer buf) {

@@ -236,7 +236,7 @@ public class MultiDeviceFractal implements GLEventListener {
             gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, width*height * SIZEOF_INT / slices, null, GL_STREAM_DRAW);
             gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-            pboBuffers[i] = clContext.createFromGLBuffer(null, pbo[i], WRITE_ONLY);
+            pboBuffers[i] = clContext.createFromGLBuffer(pbo[i], WRITE_ONLY);
 
         }
 

@@ -163,7 +163,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
         commandQueue = clContext.getMaxFlopsDevice().createCommandQueue();
 
-        clBuffer = clContext.createFromGLBuffer(null, glObjects[VERTICES], CLGLBuffer.Mem.WRITE_ONLY);
+        clBuffer = clContext.createFromGLBuffer(glObjects[VERTICES], CLGLBuffer.Mem.WRITE_ONLY);
 
         System.out.println("cl buffer type: " + clBuffer.getGLObjectType());
         System.out.println("shared with gl buffer: " + clBuffer.getGLObjectID());

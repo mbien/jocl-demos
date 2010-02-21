@@ -13,11 +13,11 @@ public abstract class RenderingConfig {
   StructAccessor accessor;
 
   public static int size() {
-    if (CPU.is32Bit()) {
-      return RenderingConfig32.size();
-    } else {
+//    if (CPU.is32Bit()) {
+//      return RenderingConfig32.size();
+//    } else {
       return RenderingConfig64.size();
-    }
+//    }
   }
 
   public static RenderingConfig create() {
@@ -25,11 +25,11 @@ public abstract class RenderingConfig {
   }
 
   public static RenderingConfig create(java.nio.ByteBuffer buf) {
-    if (CPU.is32Bit()) {
-      return new RenderingConfig32(buf);
-    } else {
+//    if (CPU.is32Bit()) {
+//      return new RenderingConfig32(buf);
+//    } else {
       return new RenderingConfig64(buf);
-    }
+//    }
   }
 
   RenderingConfig(java.nio.ByteBuffer buf) {
