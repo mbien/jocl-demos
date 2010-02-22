@@ -137,7 +137,7 @@ public class MultiDeviceFractal implements GLEventListener {
             // create context managing all available GPUs
             clContext = CLGLContext.create(glCtx, GPU);
 
-            CLDevice[] devices = clContext.getCLDevices();
+            CLDevice[] devices = clContext.getDevices();
 
             slices = min(devices.length, MAX_PARRALLELISM_LEVEL);
 
