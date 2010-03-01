@@ -1,7 +1,7 @@
 /*
  * 18:42 Saturday, February 27 2010
  */
-package com.mbien.opencl.demos.sort;
+package com.mbien.opencl.demos.bitonicsort;
 
 import com.mbien.opencl.CLBuffer;
 import com.mbien.opencl.CLCommandQueue;
@@ -37,7 +37,7 @@ public class BitonicSort {
 
         final int sortDir  = 1;
         final int elements = 1048576;
-        final int maxvalue = 100000;
+        final int maxvalue = 1000000;
 
         out.println("Initializing OpenCL...");
 
@@ -76,7 +76,7 @@ public class BitonicSort {
             out.println(currentTimeMillis() - time+"ms");
 
             IntBuffer keys = keyBuffer.getBuffer();
-            printSnapshot(keys, 10);
+            printSnapshot(keys, 20);
             checkIfSorted(keys);
 
             out.println("\nTEST PASSED");
