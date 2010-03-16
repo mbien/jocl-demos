@@ -118,6 +118,7 @@ public class MultiDeviceFractal implements GLEventListener {
         // enable GL error checking using the composable pipeline
         drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 
+        drawable.getGL().glFinish();
         initCL(drawable.getContext());
 
         GL2 gl = drawable.getGL().getGL2();
@@ -295,6 +296,8 @@ public class MultiDeviceFractal implements GLEventListener {
     public void display(GLAutoDrawable drawable) {
         GL gl = drawable.getGL();
 
+        // make sure GL does not use our objects before we start computeing
+        gl.glFinish();
         if(!buffersInitialized) {
             initPBO(gl);
             setKernelConstants();
@@ -303,8 +306,6 @@ public class MultiDeviceFractal implements GLEventListener {
             buildProgram();
             setKernelConstants();
         }
-        // make sure GL does not use our objects before we start computeing
-        gl.glFinish();
         compute();
 
         render(gl.getGL2());
@@ -335,7 +336,7 @@ public class MultiDeviceFractal implements GLEventListener {
 
         }
 
-        // block until done
+        // block until done (important: finish before doing further gl work)
         for (int i = 0; i < slices; i++) {
             queues[i].finish();
         }

@@ -179,9 +179,12 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
     public void display(GLAutoDrawable drawable) {
 
-        computeHeightfield();
-
         GL2 gl = drawable.getGL().getGL2();
+
+        // ensure pipeline is clean before doing cl work
+        gl.glFinish();
+
+        computeHeightfield();
 
         gl.glClear(GL2.GL_COLOR_BUFFER_BIT | GL2.GL_DEPTH_BUFFER_BIT);
         gl.glLoadIdentity();
@@ -199,8 +202,6 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
 
 //            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
-
-        gl.glFinish();
         
     }
 
