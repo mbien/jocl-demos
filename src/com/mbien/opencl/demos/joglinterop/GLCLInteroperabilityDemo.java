@@ -1,8 +1,8 @@
 package com.mbien.opencl.demos.joglinterop;
 
 import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLGLBuffer;
-import com.mbien.opencl.CLGLContext;
+import com.mbien.opencl.gl.CLGLBuffer;
+import com.mbien.opencl.gl.CLGLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
 import com.sun.opengl.util.Animator;

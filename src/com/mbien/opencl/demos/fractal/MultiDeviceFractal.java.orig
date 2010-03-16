@@ -2,12 +2,13 @@ package com.mbien.opencl.demos.fractal;
 
 import com.mbien.opencl.CLBuffer;
 import com.mbien.opencl.CLCommandQueue;
+import com.mbien.opencl.CLContext;
 import com.mbien.opencl.CLDevice;
 import com.mbien.opencl.CLEvent;
 import com.mbien.opencl.CLEventList;
 import com.mbien.opencl.CLException;
-import com.mbien.opencl.gl.CLGLBuffer;
-import com.mbien.opencl.gl.CLGLContext;
+import com.mbien.opencl.CLGLBuffer;
+import com.mbien.opencl.CLGLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
 import com.mbien.opencl.CLProgram.CompilerOptions;
@@ -64,16 +65,16 @@ public class MultiDeviceFractal implements GLEventListener {
     private static final int MAX_PARRALLELISM_LEVEL = 8;
 
     // max per pixel iterations to compute the fractal
-    private static final int MAX_ITERATIONS         = 500;
+    private static final int MAX_ITERATIONS         = 1000;
 
     private GLCanvas canvas;
 
-    private CLGLContext clContext;
+    private CLContext clContext;
     private CLCommandQueue[] queues;
     private CLKernel[] kernels;
     private CLProgram program;
     private CLEventList probes;
-    private CLGLBuffer<?>[] pboBuffers;
+    private CLBuffer<?>[] pboBuffers;
     private CLBuffer<IntBuffer>[] colorMap;
 
     private int width  = 0;
@@ -135,9 +136,9 @@ public class MultiDeviceFractal implements GLEventListener {
     private void initCL(GLContext glCtx){
         try {
             // create context managing all available GPUs
-            clContext = CLGLContext.create(glCtx, GPU);
+            clContext = CLContext.create(GPU);
 
-            CLDevice[] devices = clContext.getDevices();
+            CLDevice[] devices = clContext.getCLDevices();
 
             slices = min(devices.length, MAX_PARRALLELISM_LEVEL);
 
@@ -217,26 +218,27 @@ public class MultiDeviceFractal implements GLEventListener {
         if(pboBuffers != null) {
             int[] oldPbos = new int[pboBuffers.length];
             for (int i = 0; i < pboBuffers.length; i++) {
-                CLGLBuffer<?> buffer = pboBuffers[i];
-                oldPbos[i] = buffer.GLID;
+                CLBuffer<?> buffer = pboBuffers[i];
+//                oldPbos[i] = buffer.GLID;
                 buffer.release();
             }
-            gl.glDeleteBuffers(oldPbos.length, oldPbos, 0);
+//            gl.glDeleteBuffers(oldPbos.length, oldPbos, 0);
         }
 
-        pboBuffers = new CLGLBuffer[slices];
+        pboBuffers = new CLBuffer[slices];
 
-        int[] pbo = new int[slices];
-        gl.glGenBuffers(slices, pbo, 0);
+//        int[] pbo = new int[slices];
+//        gl.glGenBuffers(slices, pbo, 0);
 
         // setup one empty PBO per slice
         for (int i = 0; i < slices; i++) {
 
-            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[i]);
-            gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, width*height * SIZEOF_INT / slices, null, GL_STREAM_DRAW);
-            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+//            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[i]);
+//            gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, width*height * SIZEOF_INT / slices, null, GL_STREAM_DRAW);
+//            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-            pboBuffers[i] = clContext.createFromGLBuffer(pbo[i], WRITE_ONLY);
+            pboBuffers[i] = clContext.createByteBuffer(width*height * SIZEOF_INT / slices, WRITE_ONLY);
+//            pboBuffers[i] = clContext.createFromGLBuffer(null, pbo[i], WRITE_ONLY);
 
         }
 
@@ -320,6 +322,7 @@ public class MultiDeviceFractal implements GLEventListener {
         // release all old events, you can't reuse events in OpenCL
         probes.release();
 
+        long time = System.currentTimeMillis();
         // start computation
         for (int i = 0; i < slices; i++) {
 
@@ -329,9 +332,11 @@ public class MultiDeviceFractal implements GLEventListener {
                       .rewind();
 
             // aquire GL objects, and enqueue a kernel with a probe from the list
-            queues[i].putAcquireGLObject(pboBuffers[i].ID)
+            queues[i]
+//                    .putAcquireGLObject(pboBuffers[i].ID)
                      .put2DRangeKernel(kernels[i], 0, 0, sliceWidth, height, 0, 0, probes)
-                     .putReleaseGLObject(pboBuffers[i].ID);
+//                     .putReleaseGLObject(pboBuffers[i].ID)
+                     ;
 
         }
 
@@ -339,6 +344,7 @@ public class MultiDeviceFractal implements GLEventListener {
         for (int i = 0; i < slices; i++) {
             queues[i].finish();
         }
+        System.out.println((System.currentTimeMillis()-time)/1000.0f);
 
     }
 
@@ -350,17 +356,17 @@ public class MultiDeviceFractal implements GLEventListener {
         //draw slices
         int sliceWidth = width / slices;
 
-        for (int i = 0; i < slices; i++) {
-
-            int seperatorOffset = drawSeperator?i:0;
-
-            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboBuffers[i].GLID);
-            gl.glRasterPos2i(sliceWidth*i + seperatorOffset, 0);
-
-            gl.glDrawPixels(sliceWidth, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
-
-        }
-        gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+//        for (int i = 0; i < slices; i++) {
+//
+//            int seperatorOffset = drawSeperator?i:0;
+//
+//            gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboBuffers[i].GLID);
+//            gl.glRasterPos2i(sliceWidth*i + seperatorOffset, 0);
+//
+//            gl.glDrawPixels(sliceWidth, height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
+//
+//        }
+//        gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         //draw info text
         textRenderer.beginRendering(width, height, false);
@@ -371,7 +377,7 @@ public class MultiDeviceFractal implements GLEventListener {
                 CLEvent event = probes.getEvent(i);
                 long start = event.getProfilingInfo(START);
                 long end = event.getProfilingInfo(END);
-                textRenderer.draw("GPU"+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, height-(20+16*(slices-i)));
+                textRenderer.draw("GPU"+i +" "+((end-start)/1000000000.0f)+"s", 10, height-(20+16*(slices-i)));
             }
 
         textRenderer.endRendering();

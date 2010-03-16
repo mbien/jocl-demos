@@ -17,7 +17,6 @@ import java.nio.FloatBuffer;
 import javax.swing.SwingUtilities;
 
 import static com.mbien.opencl.CLMemory.Mem.*;
-import static com.mbien.opencl.CLDevice.Type.*;
 import static com.mbien.opencl.CLProgram.CompilerOptions.*;
 import static com.mbien.opencl.demos.julia3d.UserSceneController.*;
 
@@ -51,7 +50,7 @@ public class Julia3d {
         workGroupSize = 256;
 
         //allocate buffers
-        configBuffer = context.createBuffer(config.getBuffer(), READ_ONLY, USE_BUFFER);
+        configBuffer = context.createBuffer(config.getBuffer(), READ_ONLY);
         commandQueue = gpu.createCommandQueue();
 //        update(true);
 
