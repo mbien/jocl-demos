@@ -9,6 +9,7 @@ import com.mbien.opencl.CLException;
 import com.mbien.opencl.gl.CLGLBuffer;
 import com.mbien.opencl.gl.CLGLContext;
 import com.mbien.opencl.CLKernel;
+import com.mbien.opencl.CLPlatform;
 import com.mbien.opencl.CLProgram;
 import com.mbien.opencl.CLProgram.CompilerOptions;
 import com.sun.opengl.util.awt.TextRenderer;
@@ -37,7 +38,7 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import static com.sun.gluegen.runtime.BufferFactory.*;
+import static com.jogamp.gluegen.runtime.BufferFactory.*;
 import static javax.media.opengl.GL2.*;
 import static com.mbien.opencl.CLMemory.Mem.*;
 import static com.mbien.opencl.CLEvent.ProfilingCommand.*;
@@ -115,28 +116,34 @@ public class MultiDeviceFractal implements GLEventListener {
 
     public void init(GLAutoDrawable drawable) {
 
-        // enable GL error checking using the composable pipeline
-        drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
+        if(clContext == null) {
+            // enable GL error checking using the composable pipeline
+            drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 
-        drawable.getGL().glFinish();
-        initCL(drawable.getContext());
+            drawable.getGL().glFinish();
+            initCL(drawable.getContext());
 
-        GL2 gl = drawable.getGL().getGL2();
+            GL2 gl = drawable.getGL().getGL2();
 
-        gl.setSwapInterval(0);
-        gl.glDisable(GL_DEPTH_TEST);
-        gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            gl.setSwapInterval(0);
+            gl.glDisable(GL_DEPTH_TEST);
+            gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        initView(gl, drawable.getWidth(), drawable.getHeight());
+            initView(gl, drawable.getWidth(), drawable.getHeight());
 
-        initPBO(gl);
-        setKernelConstants();
+            initPBO(gl);
+            drawable.getGL().glFinish();
+
+            setKernelConstants();
+        }
     }
 
     private void initCL(GLContext glCtx){
         try {
             // create context managing all available GPUs
-            clContext = CLGLContext.create(glCtx, GPU);
+//            clContext = CLGLContext.create(glCtx, GPU);
+            clContext = CLGLContext.create(glCtx, CLPlatform.getDefault().listCLDevices()[0]);
+
 
             CLDevice[] devices = clContext.getDevices();
 

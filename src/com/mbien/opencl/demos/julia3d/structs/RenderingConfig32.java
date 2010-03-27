@@ -5,7 +5,7 @@ package com.mbien.opencl.demos.julia3d.structs;
 
 import java.nio.*;
 
-import com.sun.gluegen.runtime.*;
+import com.jogamp.gluegen.runtime.*;
 
 
 class RenderingConfig32 extends RenderingConfig {
