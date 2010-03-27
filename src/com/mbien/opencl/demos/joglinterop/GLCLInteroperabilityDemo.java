@@ -5,7 +5,7 @@ import com.mbien.opencl.gl.CLGLBuffer;
 import com.mbien.opencl.gl.CLGLContext;
 import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLProgram;
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 import java.io.IOException;
 import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
@@ -18,7 +18,7 @@ import javax.media.opengl.glu.gl2.GLUgl2;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import static com.sun.opengl.util.BufferUtil.*;
+import static com.jogamp.opengl.util.BufferUtil.*;
 
 /**
  * JOCL - JOGL interoperability example.

@@ -1,8 +1,8 @@
 package com.mbien.opencl.demos.julia3d;
 
 import com.mbien.opencl.demos.julia3d.structs.RenderingConfig;
-import com.sun.opengl.util.BufferUtil;
-import com.sun.opengl.util.awt.TextRenderer;
+import com.jogamp.opengl.util.BufferUtil;
+import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.nio.FloatBuffer;

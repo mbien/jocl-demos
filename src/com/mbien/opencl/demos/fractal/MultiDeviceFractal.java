@@ -12,7 +12,7 @@ import com.mbien.opencl.CLKernel;
 import com.mbien.opencl.CLPlatform;
 import com.mbien.opencl.CLProgram;
 import com.mbien.opencl.CLProgram.CompilerOptions;
-import com.sun.opengl.util.awt.TextRenderer;
+import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
