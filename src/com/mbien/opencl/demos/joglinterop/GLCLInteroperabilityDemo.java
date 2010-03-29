@@ -18,7 +18,7 @@ import javax.media.opengl.glu.gl2.GLUgl2;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import static com.jogamp.opengl.util.BufferUtil.*;
+import static com.jogamp.gluegen.runtime.Buffers.*;
 
 /**
  * JOCL - JOGL interoperability example.

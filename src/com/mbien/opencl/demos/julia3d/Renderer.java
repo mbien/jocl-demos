@@ -1,7 +1,6 @@
 package com.mbien.opencl.demos.julia3d;
 
 import com.mbien.opencl.demos.julia3d.structs.RenderingConfig;
-import com.jogamp.opengl.util.BufferUtil;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -16,6 +15,7 @@ import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 
+import static com.jogamp.gluegen.runtime.Buffers.*;
 import static javax.media.opengl.GL2.*;
 import static java.lang.String.*;
 
@@ -43,7 +43,7 @@ public class Renderer implements GLEventListener {
 
         timer = new Timer();
 
-        juliaSlice = BufferUtil.newFloatBuffer(MU_RECT_SIZE * MU_RECT_SIZE * 4);
+        juliaSlice = newDirectFloatBuffer(MU_RECT_SIZE * MU_RECT_SIZE * 4);
 
         canvas = new GLCanvas(new GLCapabilities(GLProfile.get(GLProfile.GL2)));
         canvas.addGLEventListener(this);
