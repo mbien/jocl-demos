@@ -21,7 +21,7 @@ public abstract class Camera {
   }
 
   public static Camera create() {
-    return create(BufferFactory.newDirectByteBuffer(size()));
+    return create(Buffers.newDirectByteBuffer(size()));
   }
 
   public static Camera create(java.nio.ByteBuffer buf) {

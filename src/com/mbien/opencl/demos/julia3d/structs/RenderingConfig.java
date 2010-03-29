@@ -21,7 +21,7 @@ public abstract class RenderingConfig {
   }
 
   public static RenderingConfig create() {
-    return create(BufferFactory.newDirectByteBuffer(size()));
+    return create(Buffers.newDirectByteBuffer(size()));
   }
 
   public static RenderingConfig create(java.nio.ByteBuffer buf) {

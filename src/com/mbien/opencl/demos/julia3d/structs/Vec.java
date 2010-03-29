@@ -21,7 +21,7 @@ public abstract class Vec {
   }
 
   public static Vec create() {
-    return create(BufferFactory.newDirectByteBuffer(size()));
+    return create(Buffers.newDirectByteBuffer(size()));
   }
 
   public static Vec create(java.nio.ByteBuffer buf) {
