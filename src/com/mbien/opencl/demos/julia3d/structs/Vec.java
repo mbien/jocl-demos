@@ -3,9 +3,8 @@
 
 package com.mbien.opencl.demos.julia3d.structs;
 
-import java.nio.*;
 
-import com.jogamp.gluegen.runtime.*;
+import com.jogamp.common.nio.*;
 
 
 public abstract class Vec {

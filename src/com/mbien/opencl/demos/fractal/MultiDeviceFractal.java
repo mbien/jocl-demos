@@ -38,7 +38,7 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import static com.jogamp.gluegen.runtime.Buffers.*;
+import static com.jogamp.common.nio.Buffers.*;
 import static javax.media.opengl.GL2.*;
 import static com.mbien.opencl.CLMemory.Mem.*;
 import static com.mbien.opencl.CLEvent.ProfilingCommand.*;
