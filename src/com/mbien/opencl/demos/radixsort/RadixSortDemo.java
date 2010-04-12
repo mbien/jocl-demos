@@ -30,11 +30,14 @@ public class RadixSortDemo {
             context = CLContext.create(CLPlatform.getDefault().getMaxFlopsDevice(GPU));
             CLCommandQueue queue = context.getDevices()[0].createCommandQueue();
 
-            int maxValue = 10000000;
+            int maxValue = Integer.MAX_VALUE;
+            int samples  = 10;
 
             int[] workgroupSizes = new int[] {128, 256};
 
-            int[] runs = new int[] {  131072,
+            int[] runs = new int[] {   32768,
+                                       65536,
+                                      131072,
                                       262144,
                                       524288,
                                      1048576,
@@ -50,8 +53,9 @@ public class RadixSortDemo {
 
                 for(int run = 0; run < runs.length; run++) {
 
-                    if(workgroupSize==128 && run == runs.length-1) {
-                        break; // we can only sort up to 4MB with wg size of 128
+                    if(  workgroupSize==128 && runs[run] >= 8388608
+                      || workgroupSize==256 && runs[run] <= 32768) {
+                        continue; // we can only sort up to 4MB with wg size of 128
                     }
 
                     int numElements = runs[run];
@@ -63,15 +67,18 @@ public class RadixSortDemo {
                     fillBuffer(array, maxValue);
 
                     RadixSort radixSort = new RadixSort(queue, numElements, workgroupSize);
-                    queue.finish();
+                    for(int a = 0; a < samples; a++) {
 
-                    long time = currentTimeMillis();
+                        queue.finish();
+
+                        long time = nanoTime();
 
                         queue.putWriteBuffer(array, false);
                         radixSort.sort(array, numElements, 32);
                         queue.putReadBuffer(array, true);
 
-                    out.println("time: " + (currentTimeMillis() - time)+"ms");
+                        out.println("time: " + (nanoTime() - time)/1000000.0f+"ms");
+                    }
 
                     out.print("snapshot: ");
                     printSnapshot(array.getBuffer(), 20);
@@ -84,7 +91,7 @@ public class RadixSortDemo {
                     radixSort.release();
                 }
             }
-            
+
         }finally{
             if(context != null) {
                 context.release();
