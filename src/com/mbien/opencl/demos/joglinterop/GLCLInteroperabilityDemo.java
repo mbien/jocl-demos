@@ -1,9 +1,11 @@
 package com.mbien.opencl.demos.joglinterop;
 
 import com.mbien.opencl.CLCommandQueue;
+import com.mbien.opencl.CLDevice;
 import com.mbien.opencl.gl.CLGLBuffer;
 import com.mbien.opencl.gl.CLGLContext;
 import com.mbien.opencl.CLKernel;
+import com.mbien.opencl.CLPlatform;
 import com.mbien.opencl.CLProgram;
 import com.jogamp.opengl.util.Animator;
 import java.io.IOException;
@@ -111,42 +113,54 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
     public void init(GLAutoDrawable drawable) {
 
-        // create OpenCL context before creating any OpenGL objects
-        // you want to share with OpenCL (AMD driver requirement)
-        clContext = CLGLContext.create(drawable.getContext());
+        if(clContext == null) {
 
-        // enable GL error checking using the composable pipeline
-        drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
+            // find gl compatible device
+            CLDevice[] devices = CLPlatform.getDefault().listCLDevices();
+            CLDevice device = null;
+            for (CLDevice d : devices) {
+                if(d.isGLMemorySharingSupported()) {
+                    device = d;
+                    break;
+                }
+            }
+            // create OpenCL context before creating any OpenGL objects
+            // you want to share with OpenCL (AMD driver requirement)
+            clContext = CLGLContext.create(drawable.getContext(), device);
 
-        // OpenGL initialization
-        GL2 gl = drawable.getGL().getGL2();
+            // enable GL error checking using the composable pipeline
+            drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 
-        gl.setSwapInterval(1);
+            // OpenGL initialization
+            GL2 gl = drawable.getGL().getGL2();
 
-        gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_LINE);
+            gl.setSwapInterval(1);
 
-        gl.glGenBuffers(glObjects.length, glObjects, 0);
+            gl.glPolygonMode(GL2.GL_FRONT_AND_BACK, GL2.GL_LINE);
 
-//        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
-//        gl.glBufferData(GL2.GL_ELEMENT_ARRAY_BUFFER, ib.capacity() * SIZEOF_INT, ib, GL2.GL_STATIC_DRAW);
-//        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, 0);
+            gl.glGenBuffers(glObjects.length, glObjects, 0);
 
-        gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
-            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
-            gl.glBufferData(GL2.GL_ARRAY_BUFFER, MESH_SIZE * MESH_SIZE * 4 * SIZEOF_FLOAT, null, GL2.GL_DYNAMIC_DRAW);
-            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
-        gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
+    //        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, glObjects[INDICES]);
+    //        gl.glBufferData(GL2.GL_ELEMENT_ARRAY_BUFFER, ib.capacity() * SIZEOF_INT, ib, GL2.GL_STATIC_DRAW);
+    //        gl.glBindBuffer(GL2.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        gl.glFinish();
+            gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
+                gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
+                gl.glBufferData(GL2.GL_ARRAY_BUFFER, MESH_SIZE * MESH_SIZE * 4 * SIZEOF_FLOAT, null, GL2.GL_DYNAMIC_DRAW);
+                gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
+            gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
 
-        // init OpenCL
-        initCL();
+            pushPerspectiveView(gl);
+            gl.glFinish();
 
-        pushPerspectiveView(gl);
+            // init OpenCL
+            initCL();
 
-        // start rendering thread
-        Animator animator = new Animator(drawable);
-        animator.start();
+            // start rendering thread
+            Animator animator = new Animator(drawable);
+            animator.start();
+
+        }
     }
 
     private void initCL() {
@@ -155,8 +169,9 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         try {
             program = clContext.createProgram(getClass().getResourceAsStream("JoglInterop.cl"));
             program.build();
-            System.out.println(program.getBuildLog());
             System.out.println(program.getBuildStatus());
+            System.out.println(program.isExecutable());
+            System.out.println(program.getBuildLog());
         } catch (IOException ex) {
             throw new RuntimeException("can not handle exception", ex);
         }
@@ -202,7 +217,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
 
 //            gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
-        
+
     }
 
     /*
