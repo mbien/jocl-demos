@@ -1,7 +1,7 @@
-package com.mbien.opencl.demos.julia3d;
+package com.jogamp.opencl.demos.julia3d;
 
-import com.mbien.opencl.demos.julia3d.structs.RenderingConfig;
-import com.mbien.opencl.demos.julia3d.structs.Vec;
+import com.jogamp.opencl.demos.julia3d.structs.RenderingConfig;
+import com.jogamp.opencl.demos.julia3d.structs.Vec;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.KeyAdapter;
@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 import static java.lang.Math.*;
-import static com.mbien.opencl.demos.julia3d.Renderer.*;
+import static com.jogamp.opencl.demos.julia3d.Renderer.*;
 
 /**
  * Utility class for interacting with a scene. Supports rotation and zoom around origin.

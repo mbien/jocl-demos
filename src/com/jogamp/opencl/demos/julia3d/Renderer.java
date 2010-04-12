@@ -1,6 +1,6 @@
-package com.mbien.opencl.demos.julia3d;
+package com.jogamp.opencl.demos.julia3d;
 
-import com.mbien.opencl.demos.julia3d.structs.RenderingConfig;
+import com.jogamp.opencl.demos.julia3d.structs.RenderingConfig;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Dimension;
 import java.awt.Font;

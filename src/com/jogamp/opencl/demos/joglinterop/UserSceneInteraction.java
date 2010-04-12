@@ -1,4 +1,4 @@
-package com.mbien.opencl.demos.joglinterop;
+package com.jogamp.opencl.demos.joglinterop;
 
 import java.awt.Component;
 import java.awt.Point;

@@ -2,21 +2,20 @@
  * 20:38 Sunday, February 28 2010
  */
 
-package com.mbien.opencl.demos.radixsort;
+package com.jogamp.opencl.demos.radixsort;
 
-import com.mbien.opencl.CLBuffer;
-import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLContext;
-import com.mbien.opencl.CLKernel;
-import com.mbien.opencl.CLProgram;
-import com.mbien.opencl.CLResource;
+import com.jogamp.opencl.CLBuffer;
+import com.jogamp.opencl.CLCommandQueue;
+import com.jogamp.opencl.CLContext;
+import com.jogamp.opencl.CLKernel;
+import com.jogamp.opencl.CLProgram;
+import com.jogamp.opencl.CLResource;
 import java.io.IOException;
 import java.nio.IntBuffer;
 
-import static com.mbien.opencl.CLMemory.Mem.*;
-import static com.mbien.opencl.CLProgram.*;
-import static com.mbien.opencl.CLProgram.CompilerOptions.*;
-import static java.lang.System.*;
+import static com.jogamp.opencl.CLMemory.Mem.*;
+import static com.jogamp.opencl.CLProgram.*;
+import static com.jogamp.opencl.CLProgram.CompilerOptions.*;
 
 /**
  *

@@ -1,24 +1,24 @@
-package com.mbien.opencl.demos.julia3d;
+package com.jogamp.opencl.demos.julia3d;
 
-import com.mbien.opencl.CLBuffer;
-import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLContext;
-import com.mbien.opencl.CLDevice;
-import com.mbien.opencl.CLKernel;
-import com.mbien.opencl.CLPlatform;
-import com.mbien.opencl.CLProgram;
-import com.mbien.opencl.demos.julia3d.structs.Camera;
-import com.mbien.opencl.demos.julia3d.structs.RenderingConfig;
-import com.mbien.opencl.demos.julia3d.structs.Vec;
+import com.jogamp.opencl.CLBuffer;
+import com.jogamp.opencl.CLCommandQueue;
+import com.jogamp.opencl.CLContext;
+import com.jogamp.opencl.CLDevice;
+import com.jogamp.opencl.CLKernel;
+import com.jogamp.opencl.CLPlatform;
+import com.jogamp.opencl.CLProgram;
+import com.jogamp.opencl.demos.julia3d.structs.Camera;
+import com.jogamp.opencl.demos.julia3d.structs.RenderingConfig;
+import com.jogamp.opencl.demos.julia3d.structs.Vec;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import javax.swing.SwingUtilities;
 
-import static com.mbien.opencl.CLMemory.Mem.*;
-import static com.mbien.opencl.CLProgram.CompilerOptions.*;
-import static com.mbien.opencl.demos.julia3d.UserSceneController.*;
+import static com.jogamp.opencl.CLMemory.Mem.*;
+import static com.jogamp.opencl.CLProgram.CompilerOptions.*;
+import static com.jogamp.opencl.demos.julia3d.UserSceneController.*;
 
 /**
  * This sample has been ported from David Buciarelli's juliaGPU v1.2 written in C.

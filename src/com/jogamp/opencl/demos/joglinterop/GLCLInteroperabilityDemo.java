@@ -1,12 +1,12 @@
-package com.mbien.opencl.demos.joglinterop;
+package com.jogamp.opencl.demos.joglinterop;
 
-import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLDevice;
-import com.mbien.opencl.gl.CLGLBuffer;
-import com.mbien.opencl.gl.CLGLContext;
-import com.mbien.opencl.CLKernel;
-import com.mbien.opencl.CLPlatform;
-import com.mbien.opencl.CLProgram;
+import com.jogamp.opencl.CLCommandQueue;
+import com.jogamp.opencl.CLDevice;
+import com.jogamp.opencl.gl.CLGLBuffer;
+import com.jogamp.opencl.gl.CLGLContext;
+import com.jogamp.opencl.CLKernel;
+import com.jogamp.opencl.CLPlatform;
+import com.jogamp.opencl.CLProgram;
 import com.jogamp.opengl.util.Animator;
 import java.io.IOException;
 import javax.media.opengl.DebugGL2;

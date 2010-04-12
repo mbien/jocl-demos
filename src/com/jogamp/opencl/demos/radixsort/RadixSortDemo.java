@@ -2,19 +2,19 @@
  * 20:48 Sunday, February 28 2010
  */
 
-package com.mbien.opencl.demos.radixsort;
+package com.jogamp.opencl.demos.radixsort;
 
-import com.mbien.opencl.CLBuffer;
-import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLContext;
-import com.mbien.opencl.CLPlatform;
+import com.jogamp.opencl.CLBuffer;
+import com.jogamp.opencl.CLCommandQueue;
+import com.jogamp.opencl.CLContext;
+import com.jogamp.opencl.CLPlatform;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.Random;
 
-import static com.mbien.opencl.CLMemory.Mem.*;
+import static com.jogamp.opencl.CLMemory.Mem.*;
 import static java.lang.System.*;
-import static com.mbien.opencl.CLDevice.Type.*;
+import static com.jogamp.opencl.CLDevice.Type.*;
 
 /**
  * GPU radix sort demo.

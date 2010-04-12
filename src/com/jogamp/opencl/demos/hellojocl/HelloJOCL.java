@@ -1,16 +1,16 @@
-package com.mbien.opencl.demos.hellojocl;
+package com.jogamp.opencl.demos.hellojocl;
 
-import com.mbien.opencl.CLBuffer;
-import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLContext;
-import com.mbien.opencl.CLKernel;
-import com.mbien.opencl.CLProgram;
+import com.jogamp.opencl.CLBuffer;
+import com.jogamp.opencl.CLCommandQueue;
+import com.jogamp.opencl.CLContext;
+import com.jogamp.opencl.CLKernel;
+import com.jogamp.opencl.CLProgram;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.util.Random;
 
 import static java.lang.System.*;
-import static com.mbien.opencl.CLMemory.Mem.*;
+import static com.jogamp.opencl.CLMemory.Mem.*;
 
 /**
  * Hello Java OpenCL example. Adds all elements of buffer A to buffer B

@@ -1,17 +1,17 @@
-package com.mbien.opencl.demos.fractal;
+package com.jogamp.opencl.demos.fractal;
 
-import com.mbien.opencl.CLBuffer;
-import com.mbien.opencl.CLCommandQueue;
-import com.mbien.opencl.CLDevice;
-import com.mbien.opencl.CLEvent;
-import com.mbien.opencl.CLEventList;
-import com.mbien.opencl.CLException;
-import com.mbien.opencl.gl.CLGLBuffer;
-import com.mbien.opencl.gl.CLGLContext;
-import com.mbien.opencl.CLKernel;
-import com.mbien.opencl.CLPlatform;
-import com.mbien.opencl.CLProgram;
-import com.mbien.opencl.CLProgram.CompilerOptions;
+import com.jogamp.opencl.CLBuffer;
+import com.jogamp.opencl.CLCommandQueue;
+import com.jogamp.opencl.CLDevice;
+import com.jogamp.opencl.CLEvent;
+import com.jogamp.opencl.CLEventList;
+import com.jogamp.opencl.CLException;
+import com.jogamp.opencl.gl.CLGLBuffer;
+import com.jogamp.opencl.gl.CLGLContext;
+import com.jogamp.opencl.CLKernel;
+import com.jogamp.opencl.CLPlatform;
+import com.jogamp.opencl.CLProgram;
+import com.jogamp.opencl.CLProgram.CompilerOptions;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -40,10 +40,9 @@ import javax.swing.SwingUtilities;
 
 import static com.jogamp.common.nio.Buffers.*;
 import static javax.media.opengl.GL2.*;
-import static com.mbien.opencl.CLMemory.Mem.*;
-import static com.mbien.opencl.CLEvent.ProfilingCommand.*;
-import static com.mbien.opencl.CLCommandQueue.Mode.*;
-import static com.mbien.opencl.CLDevice.Type.*;
+import static com.jogamp.opencl.CLMemory.Mem.*;
+import static com.jogamp.opencl.CLEvent.ProfilingCommand.*;
+import static com.jogamp.opencl.CLCommandQueue.Mode.*;
 import static java.lang.Math.*;
 
 /**
