@@ -9,7 +9,15 @@
 <!-- in the project's Project Properties dialog box.-->
 <project name="jocl-demos" default="default" basedir=".">
     <description>Builds, tests, and runs the project jocl-demos.</description>
+
+    <condition property="rootrel.build" value="build">
+      <not>
+          <isset property="rootrel.build"/>
+      </not>
+    </condition>
+
     <import file="nbproject/build-impl.xml"/>
+
     <!--
 
     There exist several targets which are by default empty and which can be 
