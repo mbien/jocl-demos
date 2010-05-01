@@ -1,9 +1,13 @@
 package com.jogamp.opencl.demos.julia3d;
 
+import com.jogamp.opencl.CLDevice;
 import com.jogamp.opencl.demos.julia3d.structs.RenderingConfig;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.nio.FloatBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,11 +41,11 @@ public class Renderer implements GLEventListener {
     private TimerTask task;
     private final Timer timer;
 
-    public Renderer(Julia3d julia3d) {
+    public Renderer(final Julia3d julia3d) {
         this.julia3d = julia3d;
         this.config = julia3d.config;
 
-        timer = new Timer();
+        timer = new Timer(true);
 
         juliaSlice = newDirectFloatBuffer(MU_RECT_SIZE * MU_RECT_SIZE * 4);
 
@@ -51,8 +55,16 @@ public class Renderer implements GLEventListener {
         usi = new UserSceneController();
         usi.init(this, canvas, config);
 
-        JFrame frame = new JFrame("Java OpenCL - Julia3D GPU");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        CLDevice device = julia3d.getDevice();
+        JFrame frame = new JFrame("Java OpenCL - Julia3D "+device.getType()+" "+device.getName());
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                julia3d.release();
+                System.exit(0);
+            }
+        });
         canvas.setPreferredSize(new Dimension(config.getWidth(), config.getHeight()));
         frame.add(canvas);
         frame.pack();

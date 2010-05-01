@@ -41,6 +41,7 @@ import javax.swing.SwingUtilities;
 import static com.jogamp.common.nio.Buffers.*;
 import static javax.media.opengl.GL2.*;
 import static com.jogamp.opencl.CLMemory.Mem.*;
+import static com.jogamp.opencl.CLDevice.Type.*;
 import static com.jogamp.opencl.CLEvent.ProfilingCommand.*;
 import static com.jogamp.opencl.CLCommandQueue.Mode.*;
 import static java.lang.Math.*;
@@ -102,7 +103,7 @@ public class MultiDeviceFractal implements GLEventListener {
         canvas.addGLEventListener(this);
         initSceneInteraction();
 
-        JFrame frame = new JFrame("JOCL Multi GPU Mandelbrot Set");
+        JFrame frame = new JFrame("JOCL Multi Device Mandelbrot Set");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         canvas.setPreferredSize(new Dimension(width, height));
         frame.add(canvas);
@@ -139,11 +140,12 @@ public class MultiDeviceFractal implements GLEventListener {
 
     private void initCL(GLContext glCtx){
         try {
-            // create context managing all available GPUs
-//            clContext = CLGLContext.create(glCtx, GPU);
-            clContext = CLGLContext.create(glCtx, CLPlatform.getDefault().listCLDevices()[0]);
-
-
+            // SLI on NV platform wasn't very fast (or did not work at all)
+            if(CLPlatform.getDefault().getName().toLowerCase().contains("nvidia")) {
+                clContext = CLGLContext.create(glCtx, CLPlatform.getDefault().getMaxFlopsDevice(GPU));
+            }else{
+                clContext = CLGLContext.create(glCtx, ALL);
+            }
             CLDevice[] devices = clContext.getDevices();
 
             slices = min(devices.length, MAX_PARRALLELISM_LEVEL);
@@ -375,10 +377,11 @@ public class MultiDeviceFractal implements GLEventListener {
             textRenderer.draw("precision: "+ (doublePrecision?"64bit":"32bit"), 10, height-15);
 
             for (int i = 0; i < slices; i++) {
+                CLDevice device = queues[i].getDevice();
                 CLEvent event = probes.getEvent(i);
                 long start = event.getProfilingInfo(START);
                 long end = event.getProfilingInfo(END);
-                textRenderer.draw("GPU"+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, height-(20+16*(slices-i)));
+                textRenderer.draw(device.getType().toString()+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, height-(20+16*(slices-i)));
             }
 
         textRenderer.endRendering();

@@ -43,15 +43,18 @@ public class Julia3d {
         this.config = renderConfig;
         updateCamera();
 
-        //setup
-        CLDevice gpu = CLPlatform.getDefault().getMaxFlopsDevice();
-        context = CLContext.create(gpu);
+        //setup, prefere GPUs
+        CLDevice device = CLPlatform.getDefault().getMaxFlopsDevice(CLDevice.Type.GPU);
+        if(device == null) {
+            device = CLPlatform.getDefault().getMaxFlopsDevice();
+        }
+        context = CLContext.create(device);
 
         workGroupSize = 256;
 
         //allocate buffers
         configBuffer = context.createBuffer(config.getBuffer(), READ_ONLY);
-        commandQueue = gpu.createCommandQueue();
+        commandQueue = device.createCommandQueue();
 //        update(true);
 
         try {
@@ -63,7 +66,7 @@ public class Julia3d {
 
         julia = program.createCLKernel("JuliaGPU");
         multiply = program.createCLKernel("multiply");
-        System.out.println(program.getBuildStatus(gpu));
+        System.out.println(program.getBuildStatus(device));
         System.out.println(program.getBuildLog());
 
     }
@@ -179,6 +182,10 @@ public class Julia3d {
         vmul(camY, .5135f, camY);
     }
 
+    CLDevice getDevice() {
+        return commandQueue.getDevice();
+    }
+
 
     public static void main(String[] args) {
 
@@ -206,6 +213,10 @@ public class Julia3d {
 
     Buffer getPixelBuffer() {
         return pixelBuffer.getBuffer();
+    }
+
+    void release() {
+        context.release();
     }
 
 
