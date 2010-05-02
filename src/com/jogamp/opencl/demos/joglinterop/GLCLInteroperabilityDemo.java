@@ -124,6 +124,9 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
                     break;
                 }
             }
+            if(null==device) {
+                throw new RuntimeException("couldn't find any CL/GL memory sharing devices ..");
+            }
             // create OpenCL context before creating any OpenGL objects
             // you want to share with OpenCL (AMD driver requirement)
             clContext = CLGLContext.create(drawable.getContext(), device);
