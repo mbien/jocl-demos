@@ -12,6 +12,7 @@ import com.jogamp.opencl.CLKernel;
 import com.jogamp.opencl.CLPlatform;
 import com.jogamp.opencl.CLProgram;
 import com.jogamp.opencl.CLProgram.CompilerOptions;
+import com.jogamp.opencl.util.CLProgramConfiguration;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -72,7 +73,7 @@ public class MultiDeviceFractal implements GLEventListener {
     private CLGLContext clContext;
     private CLCommandQueue[] queues;
     private CLKernel[] kernels;
-    private CLProgram program;
+    private CLProgram[] programs;
     private CLEventList probes;
     private CLGLBuffer<?>[] pboBuffers;
     private CLBuffer<IntBuffer>[] colorMap;
@@ -166,8 +167,31 @@ public class MultiDeviceFractal implements GLEventListener {
 
             }
 
-            // load and build program
-            program = clContext.createProgram(getClass().getResourceAsStream("Mandelbrot.cl"));
+            // check if we have 64bit FP support on all devices
+            // if yes we can use only one program for all devices + one kernel per device.
+            // if not we will have to create (at least) one program for 32 and one for 64bit devices.
+            // since there are different vendor extensions for double FP we use one program per device.
+            // (OpenCL spec is not very clear about this usecases)
+            boolean all64bit = true;
+            for (CLDevice device : devices) {
+                if(!isDoubleFPAvailable(device)) {
+                    all64bit = false;
+                    break;
+                }
+            }
+
+            // load program(s)
+            if(all64bit) {
+                programs = new CLProgram[] {
+                    clContext.createProgram(getClass().getResourceAsStream("Mandelbrot.cl"))
+                };
+            }else{
+                programs = new CLProgram[slices];
+                for (int i = 0; i < slices; i++) {
+                    programs[i] = clContext.createProgram(getClass().getResourceAsStream("Mandelbrot.cl"));
+                }
+            }
+
             buildProgram();
 
         } catch (IOException ex) {
@@ -258,33 +282,42 @@ public class MultiDeviceFractal implements GLEventListener {
          * workaround: The driver keeps using the old binaries for some reason.
          * to solve this we simple create a new program and release the old.
          * however rebuilding programs should be possible -> remove when drivers are fixed.
+         * (again: the spec is not very clear about this kind of usages)
          */
-        if(program != null && rebuild) {
-            String source = program.getSource();
-            program.release();
-            program = clContext.createProgram(source);
-        }
-
-        // disable 64bit floating point math if not available
-        if(doublePrecision) {
-            for (CLDevice device : program.getCLDevices()) {
-                if(!device.isDoubleFPAvailable()) {
-                    doublePrecision = false;
-                    break;
-                }
+        if(programs[0] != null && rebuild) {
+            for(int i = 0; i < programs.length; i++) {
+                String source = programs[i].getSource();
+                programs[i].release();
+                programs[i] = clContext.createProgram(source);
             }
         }
 
-        if(doublePrecision) {
-            program.build(CompilerOptions.FAST_RELAXED_MATH, "-D DOUBLE_FP");
-        }else{
-            program.build(CompilerOptions.FAST_RELAXED_MATH);
-        }
+        // disable 64bit floating point math if not available
+        for(int i = 0; i < programs.length; i++) {
+            CLDevice device = queues[i].getDevice();
+
+            CLProgramConfiguration configure = programs[i].prepare();
+            if(doublePrecision && isDoubleFPAvailable(device)) {
+                //cl_khr_fp64
+                configure.withDefine("DOUBLE_FP");
+
+                //amd's verson of double precision floating point math
+                if(!device.isDoubleFPAvailable() && device.isExtensionAvailable("cl_amd_fp64")) {
+                    configure.withDefine("AMD_FP");
+                }
+            }
+            if(programs.length > 1) {
+                configure.forDevice(device);
+            }
+            System.out.println(configure);
+            configure.withOption(CompilerOptions.FAST_RELAXED_MATH).build();
+         }
+
         rebuild = false;
 
         for (int i = 0; i < kernels.length; i++) {
             // init kernel with constants
-            kernels[i] = program.createCLKernel("mandelbrot");
+            kernels[i] = programs[min(i, programs.length)].createCLKernel("mandelbrot");
         }
 
     }
@@ -292,7 +325,7 @@ public class MultiDeviceFractal implements GLEventListener {
     // init kernels with constants
     private void setKernelConstants() {
         for (int i = 0; i < slices; i++) {
-            kernels[i].setForce32BitArgs(!doublePrecision)
+            kernels[i].setForce32BitArgs(!doublePrecision || !isDoubleFPAvailable(queues[i].getDevice()))
                       .setArg(6, pboBuffers[i])
                       .setArg(7, colorMap[i])
                       .setArg(8, colorMap[i].getBuffer().capacity())
@@ -374,14 +407,17 @@ public class MultiDeviceFractal implements GLEventListener {
         //draw info text
         textRenderer.beginRendering(width, height, false);
 
-            textRenderer.draw("precision: "+ (doublePrecision?"64bit":"32bit"), 10, height-15);
+            textRenderer.draw("device/time/precision", 10, height-15);
 
             for (int i = 0; i < slices; i++) {
                 CLDevice device = queues[i].getDevice();
+                boolean doubleFP = doublePrecision && isDoubleFPAvailable(device);
                 CLEvent event = probes.getEvent(i);
                 long start = event.getProfilingInfo(START);
                 long end = event.getProfilingInfo(END);
-                textRenderer.draw(device.getType().toString()+i +" "+(int)((end-start)/1000000.0f)+"ms", 10, height-(20+16*(slices-i)));
+                textRenderer.draw(device.getType().toString()+i +" "
+                               + (int)((end-start)/1000000.0f)+"ms @"
+                               + (doubleFP?"64bit":"32bit"), 10, height-(20+16*(slices-i)));
             }
 
         textRenderer.endRendering();
@@ -472,6 +508,11 @@ public class MultiDeviceFractal implements GLEventListener {
         canvas.addMouseMotionListener(mouseAdapter);
         canvas.addMouseWheelListener(mouseAdapter);
         canvas.addKeyListener(keyAdapter);
+    }
+
+
+    private boolean isDoubleFPAvailable(CLDevice device) {
+        return device.isDoubleFPAvailable() || device.isExtensionAvailable("cl_amd_fp64");
     }
 
     public void dispose(GLAutoDrawable drawable) {

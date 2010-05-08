@@ -1,5 +1,9 @@
 #ifdef DOUBLE_FP
-    #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+    #ifdef AMD_FP
+        #pragma OPENCL EXTENSION cl_amd_fp64 : enable
+    #else
+        #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+    #endif
     typedef double varfloat;
 #else
     typedef float varfloat;
