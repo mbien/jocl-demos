@@ -17,6 +17,7 @@ import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Point;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -36,7 +37,6 @@ import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import static com.jogamp.common.nio.Buffers.*;
@@ -104,8 +104,8 @@ public class MultiDeviceFractal implements GLEventListener {
         canvas.addGLEventListener(this);
         initSceneInteraction();
 
-        JFrame frame = new JFrame("JOCL Multi Device Mandelbrot Set");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Frame frame = new Frame("JOCL Multi Device Mandelbrot Set");
+//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         canvas.setPreferredSize(new Dimension(width, height));
         frame.add(canvas);
         frame.pack();
@@ -355,9 +355,9 @@ public class MultiDeviceFractal implements GLEventListener {
     // OpenCL
     private void compute() {
 
-        int sliceWidth = width / slices;
-        double rangeX   = (maxX - minX) / slices;
-        double rangeY   = (maxY - minY);
+        int sliceWidth = (int)(width / (float)slices);
+        double rangeX  = (maxX - minX) / slices;
+        double rangeY  = (maxY - minY);
 
         // release all old events, you can't reuse events in OpenCL
         probes.release();
@@ -432,8 +432,10 @@ public class MultiDeviceFractal implements GLEventListener {
         this.height = height;
 
         initPBO(drawable.getGL());
+        setKernelConstants();
 
-        initView(drawable.getGL().getGL2(), drawable.getWidth(), drawable.getHeight());
+        initView(drawable.getGL().getGL2(), width, height);
+        
     }
 
     private void initSceneInteraction() {
