@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import javax.media.opengl.GLProfile;
 import javax.swing.SwingUtilities;
 
 import static com.jogamp.opencl.CLMemory.Mem.*;
@@ -188,7 +189,7 @@ public class Julia3d {
 
 
     public static void main(String[] args) {
-
+        GLProfile.initSingleton();
         RenderingConfig config = RenderingConfig.create()
             .setWidth(640).setHeight(480)
             .setEnableShadow(1)

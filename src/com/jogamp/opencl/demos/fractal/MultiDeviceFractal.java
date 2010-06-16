@@ -141,7 +141,7 @@ public class MultiDeviceFractal implements GLEventListener {
 
     private void initCL(GLContext glCtx){
         try {
-            // SLI on NV platform wasn't very fast (or did not work at all)
+            // SLI on NV platform wasn't very fast (or did not work at all -> CL_INVALID_OPERATION)
             if(CLPlatform.getDefault().getName().toLowerCase().contains("nvidia")) {
                 clContext = CLGLContext.create(glCtx, CLPlatform.getDefault().getMaxFlopsDevice(GPU));
             }else{
@@ -196,8 +196,14 @@ public class MultiDeviceFractal implements GLEventListener {
 
         } catch (IOException ex) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, "can not find 'Mandelbrot.cl' in classpath.", ex);
+            if(clContext != null) {
+                clContext.release();
+            }
         } catch (CLException ex) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, "something went wrong, hopefully no one got hurt", ex);
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, "something went wrong, hopefully nobody got hurt", ex);
+            if(clContext != null) {
+                clContext.release();
+            }
         }
 
     }
@@ -521,6 +527,7 @@ public class MultiDeviceFractal implements GLEventListener {
     }
 
     public static void main(String args[]) {
+        GLProfile.initSingleton();
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 new MultiDeviceFractal(512, 512);
