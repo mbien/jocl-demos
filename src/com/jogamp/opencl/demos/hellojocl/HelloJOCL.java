@@ -37,7 +37,7 @@ public class HelloJOCL {
         CLBuffer<FloatBuffer> clBufferC = context.createFloatBuffer(globalWorkSize, WRITE_ONLY);
 
         out.println("used device memory: "
-            + (clBufferA.getSize()+clBufferB.getSize()+clBufferC.getSize())/1000000 +"MB");
+            + (clBufferA.getCLSize()+clBufferB.getCLSize()+clBufferC.getCLSize())/1000000 +"MB");
 
         // fill read buffers with random numbers (just to have test data; seed is fixed -> results will not change between runs).
         fillBuffer(clBufferA.getBuffer(), 12345);

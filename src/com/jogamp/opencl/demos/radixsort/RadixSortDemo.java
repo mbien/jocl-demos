@@ -62,7 +62,7 @@ public class RadixSortDemo {
 
                     CLBuffer<IntBuffer> array = context.createIntBuffer(numElements, READ_WRITE);
                     out.print("array size: " + array.getCLSize()/1000000.0f+"MB; ");
-                    out.println("elements: " + array.getCapacity()/1000+"K");
+                    out.println("elements: " + array.getCLCapacity()/1000+"K");
 
                     fillBuffer(array, maxValue);
 
