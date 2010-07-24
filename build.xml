@@ -11,7 +11,9 @@
 
     <import file="nbproject/build-impl.xml"/>
 
-    <target name="-post-jar">
+    <target name="-post-jar" depends="tag.build,create-all-jnlps"/>
+
+    <target name="create-all-jnlps">
 
         <!-- TODO temporary codebase -->
         <property name="jnlp.codepase" value="http://people.fh-landshut.de/~mbien/jogamp/jocl"/>
@@ -33,7 +35,12 @@
             <param name="jnlp.title"        value="Multi Device Mandelbrot Fractal example."/>
             <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.fractal.MultiDeviceFractal"/>
         </antcall>
+        
+    </target>
 
+    <target name="tag.build">
+        <copy file="${jocl.root}/dist/artifact.properties" todir="${dist.jar.dir}" overwrite="true"/>
+        <echo file="${dist.jar.dir}/artifact.properties" message='jocl.demos.build.number="${build.number}"${line.separator}' append="true" />
     </target>
 
     <target name="create-jnlp">
