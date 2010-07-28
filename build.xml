@@ -39,8 +39,10 @@
     </target>
 
     <target name="tag.build">
+        <property file="${dist.jar.dir}/artifact.properties"/>
+        <property name="jocl-demos.build.number" value="manual-build"/>
         <copy file="${jocl.root}/dist/artifact.properties" todir="${dist.jar.dir}" overwrite="true"/>
-        <echo file="${dist.jar.dir}/artifact.properties" message='jocl.demos.build.number="${build.number}"${line.separator}' append="true" />
+        <echo file="${dist.jar.dir}/artifact.properties" message="jocl-demos.build.number=${build.number}${line.separator}" append="true" />
     </target>
 
     <target name="create-jnlp">
