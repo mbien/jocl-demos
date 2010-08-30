@@ -51,7 +51,7 @@ typedef struct {
 } RenderingConfig;
 
 
-static float4 QuatMult(const float4 q1, const float4 q2) {
+float4 QuatMult(const float4 q1, const float4 q2) {
     float4 r;
 
     // a1a2 - b1b2 - c1c2 - d1d2
@@ -66,7 +66,7 @@ static float4 QuatMult(const float4 q1, const float4 q2) {
     return r;
 }
 
-static float4 QuatSqr(const float4 q) {
+float4 QuatSqr(const float4 q) {
     float4 r;
 
     r.x = q.x * q.x - q.y * q.y - q.z * q.z - q.w * q.w;
@@ -77,7 +77,7 @@ static float4 QuatSqr(const float4 q) {
     return r;
 }
 
-static void IterateIntersect(float4 *q, float4 *qp, const float4 c, const uint maxIterations) {
+void IterateIntersect(float4 *q, float4 *qp, const float4 c, const uint maxIterations) {
     float4 q0 = *q;
     float4 qp0 = *qp;
 
@@ -93,7 +93,7 @@ static void IterateIntersect(float4 *q, float4 *qp, const float4 c, const uint m
     *qp = qp0;
 }
 
-static float IntersectJulia(const float4 eyeRayOrig, const float4 eyeRayDir,
+float IntersectJulia(const float4 eyeRayOrig, const float4 eyeRayDir,
         const float4 c, const uint maxIterations, const float epsilon,
         float4 *hitPoint, uint *steps) {
     float dist;
@@ -170,7 +170,7 @@ float IntersectBoundingSphere(const float4 eyeRayOrig, const float4 eyeRayDir) {
     }
 }
 
-static float4 NormEstimate(const float4 p, const float4 c,
+float4 NormEstimate(const float4 p, const float4 c,
         const float delta, const uint maxIterations) {
     float4 N;
     float4 qP = p;
@@ -201,7 +201,7 @@ static float4 NormEstimate(const float4 p, const float4 c,
     return N;
 }
 
-static float4 Phong(const float4 light, const float4 eye, const float4 pt, const float4 N, const float4 diffuse) {
+float4 Phong(const float4 light, const float4 eye, const float4 pt, const float4 N, const float4 diffuse) {
 
     const float4 ambient = (float4) (0.05f, 0.05f, 0.05f, 0.f);
     float4 L = normalize(light - pt);
