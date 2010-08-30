@@ -15,8 +15,8 @@
 
     <target name="create-all-jnlps">
 
-        <!-- TODO temporary codebase -->
-        <property name="jnlp.codepase" value="http://people.fh-landshut.de/~mbien/jogamp/jocl"/>
+        <property name="jocl.codepase"       value="http://jogamp.org/deployment/webstart-next/jocl"/>
+        <property name="jocl-demos.codepase" value="http://jogamp.org/deployment/webstart-next/jocl-demos"/>
         
         <antcall target="create-jnlp" inheritrefs="true">
             <param name="jnlp.name"         value="glclinterop"/>
@@ -26,7 +26,7 @@
 
         <antcall target="create-jnlp" inheritrefs="true">
             <param name="jnlp.name"         value="julia3d"/>
-            <param name="jnlp.title"        value="3D Jula Set Fractal demo."/>
+            <param name="jnlp.title"        value="3D Julia Set Fractal demo."/>
             <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.julia3d.Julia3d"/>
         </antcall>
 
@@ -51,9 +51,9 @@
                 <replacestring from="DEMO_TITLE" to="${jnlp.title}"/>
                 <replacestring from="NAME_TAG" to="${jnlp.name}"/>
                 <replacestring from="CLASS_TAG" to="${jnlp.mainclass}"/>
-                <replacestring from="DEMO_CODEBASE_TAG" to="${jnlp.codepase}/demos/"/>
-                <replacestring from="JOCL_CODEBASE_TAG" to="${jnlp.codepase}/"/>
-                <replacestring from="JOGL_CODEBASE_TAG" to="http://jogamp.org/deployment/webstart-next/"/>
+                <replacestring from="DEMO_CODEBASE_TAG" to="${jocl-demos.codepase}/"/>
+                <replacestring from="JOCL_CODEBASE_TAG" to="${jocl.codepase}"/>
+                <replacestring from="JOGL_CODEBASE_TAG" to="http://jogamp.org/deployment/webstart-next"/>
             </filterchain>
         </copy>
     </target>
