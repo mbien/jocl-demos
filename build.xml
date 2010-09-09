@@ -21,19 +21,29 @@
         <antcall target="create-jnlp" inheritrefs="true">
             <param name="jnlp.name"         value="glclinterop"/>
             <param name="jnlp.title"        value="JOGL - JOCL interoperability example."/>
+            <param name="jnlp.jogl"         value="true"/>
             <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.joglinterop.GLCLInteroperabilityDemo"/>
         </antcall>
 
         <antcall target="create-jnlp" inheritrefs="true">
             <param name="jnlp.name"         value="julia3d"/>
             <param name="jnlp.title"        value="3D Julia Set Fractal demo."/>
+            <param name="jnlp.jogl"         value="true"/>
             <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.julia3d.Julia3d"/>
         </antcall>
 
         <antcall target="create-jnlp" inheritrefs="true">
-            <param name="jnlp.name"         value="multidevicefractal"/>
+            <param name="jnlp.name"         value="multi-device-fractal"/>
             <param name="jnlp.title"        value="Multi Device Mandelbrot Fractal example."/>
+            <param name="jnlp.jogl"         value="true"/>
             <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.fractal.MultiDeviceFractal"/>
+        </antcall>
+
+        <antcall target="create-jnlp" inheritrefs="true">
+            <param name="jnlp.name"         value="clinfo"/>
+            <param name="jnlp.title"        value="OpenCL diagnostics."/>
+            <param name="jnlp.jogl"         value="false"/>
+            <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.info.CLInfo"/>
         </antcall>
         
     </target>
@@ -46,6 +56,11 @@
     </target>
 
     <target name="create-jnlp">
+        <condition  property="jogl.extension"
+                    value='&lt;extension name="jogl-all-awt" href="http://jogamp.org/deployment/webstart-next/jogl-all-awt.jnlp"/&gt;'
+                    else="">
+            <istrue value="${jnlp.jogl}"/>
+        </condition>
         <copy file="demo-template.jnlp" tofile="${dist.jar.dir}/${jnlp.name}.jnlp">
             <filterchain>
                 <replacestring from="DEMO_TITLE" to="${jnlp.title}"/>
@@ -53,7 +68,7 @@
                 <replacestring from="CLASS_TAG" to="${jnlp.mainclass}"/>
                 <replacestring from="DEMO_CODEBASE_TAG" to="${jocl-demos.codepase}/"/>
                 <replacestring from="JOCL_CODEBASE_TAG" to="${jocl.codepase}"/>
-                <replacestring from="JOGL_CODEBASE_TAG" to="http://jogamp.org/deployment/webstart-next"/>
+                <replacestring from="EXTENSION" to="${jogl.extension}"/>
             </filterchain>
         </copy>
     </target>
