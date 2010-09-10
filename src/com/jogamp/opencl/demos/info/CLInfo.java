@@ -4,23 +4,42 @@
 
 package com.jogamp.opencl.demos.info;
 
+import com.jogamp.common.JogampRuntimeException;
 import com.jogamp.opencl.CLDevice;
 import com.jogamp.opencl.CLPlatform;
+import com.jogamp.opencl.util.ExceptionReporter;
 import java.awt.Container;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+import javax.swing.UIManager;
 
 /**
- *
+ * Displays OpenCL information in a table.
  * @author Michael Bien
  */
 public class CLInfo {
 
     public static void main(String[] args) {
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ex) {
+            Logger.getLogger(CLInfo.class.getName()).log(Level.INFO, null, ex);
+        }
+
+        try{
+            CLPlatform.initialize();
+        }catch(JogampRuntimeException ex) {
+            Logger.getLogger(CLInfo.class.getName()).log(Level.SEVERE, null, ex);
+            ExceptionReporter.appear("I tried hard but I really can't initialize JOCL. Is OpenCL properly set up?", ex);
+            return;
+        }
 
         JFrame frame = new JFrame("OpenCL Info");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
