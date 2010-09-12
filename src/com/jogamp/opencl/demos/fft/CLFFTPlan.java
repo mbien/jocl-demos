@@ -267,8 +267,8 @@ public class CLFFTPlan {
             // may be larger than what kernel may execute with ... if thats the case we need to regenerate the kernel source
             // setting this as limit i.e max group size and rebuild.
             if (getPatchingRequired(devices)) {
-                release();
                 this.max_work_item_per_workgroup = (int) getMaxKernelWorkGroupSize(devices);
+                release();
             } else {
                 done = true;
             }
@@ -279,9 +279,6 @@ public class CLFFTPlan {
      * Release system resources.
      */
     public void release() {
-        for (CLFFTKernelInfo kInfo : kernel_list) {
-            kInfo.kernel.release();
-        }
         program.release();
     }
 
