@@ -46,9 +46,9 @@ public class BandwidthBenchmark {
     private static int SHMOO_LIMIT_16MB = (1 << 24);         //16 MB
     private static int SHMOO_LIMIT_32MB = (1 << 25);         //32 MB
 
-    private enum TEST_MODE { QUICK_MODE, RANGE_MODE, SHMOO_MODE };
+    private enum TEST_MODE { QUICK, RANGE, SHMOO };
     private enum COPY { DEVICE_TO_HOST, HOST_TO_DEVICE, DEVICE_TO_DEVICE };
-    private enum MODE { PAGEABLE, PINNED };
+    private enum MEMORY { PAGEABLE, PINNED };
     private enum ACCESS { MAPPED, DIRECT };
 
 
@@ -58,13 +58,13 @@ public class BandwidthBenchmark {
         int end = DEFAULT_SIZE;
         int increment = DEFAULT_INCREMENT;
 
-        TEST_MODE mode = TEST_MODE.QUICK_MODE;
-        MODE memMode = MODE.PAGEABLE;
+        TEST_MODE mode = TEST_MODE.QUICK;
+        MEMORY memMode = MEMORY.PAGEABLE;
         ACCESS accMode = ACCESS.DIRECT;
 
         CLPlatform[] platforms = CLPlatform.listCLPlatforms();
         CLPlatform platform = platforms[0];
-        
+
         // prefere NV
         for (CLPlatform p : platforms) {
             if(p.getICDSuffix().equals("NV")) {
@@ -73,7 +73,30 @@ public class BandwidthBenchmark {
             }
         }
 
-        CLContext context = CLContext.create(platform.getMaxFlopsDevice(CLDevice.Type.GPU));
+        CLDevice device = platform.getMaxFlopsDevice();
+
+        int deviceIndex = -1;
+        for (String arg : args) {
+            if(arg.startsWith("--access=")) {
+                accMode = ACCESS.valueOf(arg.substring(9).toUpperCase());
+            }else if(arg.startsWith("--memory=")) {
+                memMode = MEMORY.valueOf(arg.substring(9).toUpperCase());
+            }else if(arg.startsWith("--device=")) {
+                deviceIndex = Integer.parseInt(arg.substring(9).toUpperCase());
+            }else if(arg.startsWith("--mode=")) {
+                mode = TEST_MODE.valueOf(arg.substring(7).toUpperCase());
+            }else if(arg.startsWith("--platform=")) {
+                platform = platforms[Integer.parseInt(arg.substring(11))];
+            }else{
+                System.out.println("unknown arg: "+arg);
+                System.exit(1);
+            }
+        }
+        if(deviceIndex != -1) {
+            device = platform.listCLDevices()[deviceIndex];
+        }
+
+        CLContext context = CLContext.create(device);
 
         System.out.println();
         System.out.println(platform);
@@ -88,15 +111,15 @@ public class BandwidthBenchmark {
         context.release();
     }
 
-    private static void testBandwidth(CLContext context, int start, int end, int increment, TEST_MODE mode, COPY kind, ACCESS accMode, MODE memMode) {
+    private static void testBandwidth(CLContext context, int start, int end, int increment, TEST_MODE mode, COPY kind, ACCESS accMode, MEMORY memMode) {
         switch (mode) {
-            case QUICK_MODE:
+            case QUICK:
                 testBandwidthQuick(context, DEFAULT_SIZE, kind, accMode, memMode);
                 break;
-            case RANGE_MODE:
+            case RANGE:
                 testBandwidthRange(context, start, end, increment, kind, accMode, memMode);
                 break;
-            case SHMOO_MODE:
+            case SHMOO:
                 testBandwidthShmoo(context, kind, accMode, memMode);
                 break;
             default:
@@ -107,14 +130,14 @@ public class BandwidthBenchmark {
     /**
      * Run a quick mode bandwidth test
      */
-    private static void testBandwidthQuick(CLContext context, int size, COPY kind, ACCESS accMode, MODE memMode) {
+    private static void testBandwidthQuick(CLContext context, int size, COPY kind, ACCESS accMode, MEMORY memMode) {
         testBandwidthRange(context, size, size, DEFAULT_INCREMENT, kind, accMode, memMode);
     }
 
     /**
      * Run a range mode bandwidth test
      */
-    private static void testBandwidthRange(CLContext context, int start, int end, int increment, COPY kind, ACCESS accMode, MODE memMode) {
+    private static void testBandwidthRange(CLContext context, int start, int end, int increment, COPY kind, ACCESS accMode, MEMORY memMode) {
         //count the number of copies we're going to run
         int count = 1 + ((end - start) / increment);
 
@@ -151,7 +174,7 @@ public class BandwidthBenchmark {
     /**
      *  Intense shmoo mode - covers a large range of values with varying increments
      */
-    private static void testBandwidthShmoo(CLContext context, COPY kind, ACCESS accMode, MODE memMode) {
+    private static void testBandwidthShmoo(CLContext context, COPY kind, ACCESS accMode, MEMORY memMode) {
 
         //count the number of copies to make
         int count = 1 + (SHMOO_LIMIT_20KB / SHMOO_INCREMENT_1KB)
@@ -216,7 +239,7 @@ public class BandwidthBenchmark {
     /**
      *  test the bandwidth of a device to host memcopy of a specific size
      */
-    private static double testDeviceToHostTransfer(CLCommandQueue queue, int memSize, ACCESS accMode, MODE memMode) {
+    private static double testDeviceToHostTransfer(CLCommandQueue queue, int memSize, ACCESS accMode, MEMORY memMode) {
 
         ByteBuffer h_data = null;
         CLBuffer<?> cmPinnedData = null;
@@ -231,14 +254,15 @@ public class BandwidthBenchmark {
 
             // Get a mapped pointer
             h_data = queue.putMapBuffer(cmPinnedData, WRITE, true);
-            h_data.clear();
+            fill(h_data);
 
             // unmap and make data in the host buffer valid
             cmPinnedData = cmPinnedData.cloneWith(h_data);
             queue.putUnmapMemory(cmPinnedData);
-        } else {
+        } else { // PAGED
             // standard host alloc
             h_data = Buffers.newDirectByteBuffer(memSize);
+            fill(h_data);
         }
 
         // allocate device memory
@@ -251,7 +275,7 @@ public class BandwidthBenchmark {
 
             cmDevData = cmDevData.cloneWith(h_data);
             queue.putWriteBuffer(cmDevData, false);
-        } else {
+        } else { // PAGED
             cmDevData = cmDevData.cloneWith(h_data);
             queue.putWriteBuffer(cmDevData, false);
         }
@@ -272,8 +296,8 @@ public class BandwidthBenchmark {
             // MAPPED: mapped pointers to device buffer for conventional pointer access
             ByteBuffer dm_idata = queue.putMapBuffer(cmDevData, WRITE, true);
             for (int i = 0; i < MEMCOPY_ITERATIONS; i++) {
-                dm_idata.put(h_data).rewind();
-                h_data.rewind();
+                h_data.put(dm_idata).rewind();
+                dm_idata.rewind();
             }
             cmDevData = cmDevData.cloneWith(dm_idata);
             queue.putUnmapMemory(cmDevData);
@@ -299,7 +323,7 @@ public class BandwidthBenchmark {
     /**
      *  test the bandwidth of a device to host memcopy of a specific size
      */
-    private static double testHostToDeviceTransfer(CLCommandQueue queue, int memSize, ACCESS accMode, MODE memMode) {
+    private static double testHostToDeviceTransfer(CLCommandQueue queue, int memSize, ACCESS accMode, MEMORY memMode) {
 
         ByteBuffer h_data;
         CLBuffer<?> cmPinnedData = null;
@@ -316,14 +340,15 @@ public class BandwidthBenchmark {
             h_data = queue.putMapBuffer(cmPinnedData, WRITE, true);
 
             //initialize
-            h_data.clear();
+            fill(h_data);
 
             // unmap and make data in the host buffer valid
             cmPinnedData = cmPinnedData.cloneWith(h_data);
             queue.putUnmapMemory(cmPinnedData);
-        } else {
+        } else { // PAGED
             // standard host alloc
             h_data = Buffers.newDirectByteBuffer(memSize);
+            fill(h_data);
         }
 
         // allocate device memory
@@ -351,8 +376,8 @@ public class BandwidthBenchmark {
             // MAPPED: mapped pointers to device buffer and conventional pointer access
             ByteBuffer dm_idata = queue.putMapBuffer(cmDevData, READ, true);
             for (int i = 0; i < MEMCOPY_ITERATIONS; i++) {
-                h_data.put(dm_idata).rewind();
-                dm_idata.rewind();
+                dm_idata.put(h_data).rewind();
+                h_data.rewind();
             }
             cmDevData = cmDevData.cloneWith(dm_idata);
             queue.putUnmapMemory(cmDevData);
@@ -365,8 +390,8 @@ public class BandwidthBenchmark {
         cmDevData.release();
 
         if (cmPinnedData != null) {
-            cmPinnedData = cmPinnedData.cloneWith(h_data);
-            queue.putUnmapMemory(cmPinnedData);
+//            cmPinnedData = cmPinnedData.cloneWith(h_data);
+//            queue.putUnmapMemory(cmPinnedData);
             cmPinnedData.release();
         }
 
@@ -384,7 +409,7 @@ public class BandwidthBenchmark {
 
         //allocate host memory
         ByteBuffer h_idata = Buffers.newDirectByteBuffer(memSize);
-        h_idata.clear();
+        fill(h_idata);
 
         // allocate device input and output memory and initialize the device input memory
         CLBuffer<?> d_idata = context.createBuffer(memSize, READ_ONLY);
@@ -419,10 +444,18 @@ public class BandwidthBenchmark {
         return 2.0 * ((double) memSize * (double) MEMCOPY_ITERATIONS) / (elapsedTime*(double)(1 << 20));
     }
 
+    private static void fill(ByteBuffer buffer) {
+        int i = 0;
+        while(buffer.remaining() > 0) {
+            buffer.putChar((char) (i++ & 0xff));
+        }
+        buffer.rewind();
+    }
+
     /**
      * print results in an easily read format
      */
-    private static void printResultsReadable(int[] memSizes, double[] bandwidths, int count, COPY kind, ACCESS accMode, MODE memMode, int iNumDevs) {
+    private static void printResultsReadable(int[] memSizes, double[] bandwidths, int count, COPY kind, ACCESS accMode, MEMORY memMode, int iNumDevs) {
         // log config information
         if (kind == COPY.DEVICE_TO_DEVICE) {
             System.out.print("Device to Device Bandwidth, "+iNumDevs+" Device(s), ");
