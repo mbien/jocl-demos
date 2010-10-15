@@ -141,11 +141,12 @@ public class MultiDeviceFractal implements GLEventListener {
 
     private void initCL(GLContext glCtx){
         try {
+            CLPlatform platform = CLPlatform.getDefault();
             // SLI on NV platform wasn't very fast (or did not work at all -> CL_INVALID_OPERATION)
-            if(CLPlatform.getDefault().getName().toLowerCase().contains("nvidia")) {
-                clContext = CLGLContext.create(glCtx, CLPlatform.getDefault().getMaxFlopsDevice(GPU));
+            if(platform.getICDSuffix().equals("NV")) {
+                clContext = CLGLContext.create(glCtx, platform.getMaxFlopsDevice(GPU));
             }else{
-                clContext = CLGLContext.create(glCtx, ALL);
+                clContext = CLGLContext.create(glCtx, platform, ALL);
             }
             CLDevice[] devices = clContext.getDevices();
 
@@ -527,7 +528,7 @@ public class MultiDeviceFractal implements GLEventListener {
     }
 
     public static void main(String args[]) {
-        GLProfile.initSingleton();
+        GLProfile.initSingleton(true);
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 new MultiDeviceFractal(512, 512);

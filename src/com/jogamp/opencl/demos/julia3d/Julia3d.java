@@ -189,7 +189,7 @@ public class Julia3d {
 
 
     public static void main(String[] args) {
-        GLProfile.initSingleton();
+        GLProfile.initSingleton(true);
         RenderingConfig config = RenderingConfig.create()
             .setWidth(640).setHeight(480)
             .setEnableShadow(1)
