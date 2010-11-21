@@ -19,11 +19,14 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.logging.Level;
@@ -105,7 +108,12 @@ public class MultiDeviceFractal implements GLEventListener {
         initSceneInteraction();
 
         Frame frame = new Frame("JOCL Multi Device Mandelbrot Set");
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                MultiDeviceFractal.this.release(e.getWindow());
+            }
+        }); 
         canvas.setPreferredSize(new Dimension(width, height));
         frame.add(canvas);
         frame.pack();
@@ -522,6 +530,14 @@ public class MultiDeviceFractal implements GLEventListener {
 
     private boolean isDoubleFPAvailable(CLDevice device) {
         return device.isDoubleFPAvailable() || device.isExtensionAvailable("cl_amd_fp64");
+    }
+
+    private void release(Window win) {
+        if(clContext != null) {
+            // releases all resources
+            clContext.release();
+        }
+        win.dispose();
     }
 
     public void dispose(GLAutoDrawable drawable) {
