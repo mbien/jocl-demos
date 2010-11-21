@@ -8,6 +8,7 @@ import com.jogamp.common.JogampRuntimeException;
 import com.jogamp.opencl.CLDevice;
 import com.jogamp.opencl.CLPlatform;
 import com.jogamp.opencl.util.ExceptionReporter;
+import com.jogamp.opencl.util.JOCLVersion;
 import java.awt.Container;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,17 +27,21 @@ import javax.swing.UIManager;
 public class CLInfo {
 
     public static void main(String[] args) {
+        
+        Logger logger = Logger.getLogger(CLInfo.class.getName());
 
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ex) {
-            Logger.getLogger(CLInfo.class.getName()).log(Level.INFO, null, ex);
+            logger.log(Level.INFO, null, ex);
         }
+
+        logger.info("\n" + JOCLVersion.getAllVersions());
 
         try{
             CLPlatform.initialize();
         }catch(JogampRuntimeException ex) {
-            Logger.getLogger(CLInfo.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
             ExceptionReporter.appear("I tried hard but I really can't initialize JOCL. Is OpenCL properly set up?", ex);
             return;
         }
