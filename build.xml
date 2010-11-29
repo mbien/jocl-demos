@@ -11,7 +11,29 @@
 
     <import file="nbproject/build-impl.xml"/>
 
-    <target name="-post-jar" depends="tag.build,create-all-jnlps"/>
+    <target name="-pre-jar">
+        <tstamp>
+            <format property="version.timestamp" pattern="yyyyMMdd"/>
+        </tstamp>
+
+        <property name="jocl-demos.build.number" value="manual" />
+        <property name="jocl-demos.build.id"     value="${version.timestamp}" />
+        <property name="jocl-demos.build.branch" value="master" />
+        <property name="jocl-demos.build.commit" value="manual" />
+
+        <property name="jocl-demos.version" value="${jocl_demos_base_version}-b${jocl-demos.build.number}-${version.timestamp}" />
+    </target>
+
+    <target name="-post-jar" depends="tag.build,create-all-jnlps">
+        <property name="dist.zip.name" value="jocl-demos-${jocl-demos.version}"/>
+        
+        <zip destfile="${dist.dir}/${dist.zip.name}.zip">
+            <zipfileset dir="${dist.dir}" includes="jocl-demos.jar" prefix="${dist.zip.name}/jar"/>
+            <zipfileset dir="${dist.dir}" includes="*.jnlp" prefix="${dist.zip.name}/jnlp-files"/>
+            <zipfileset dir="${dist.dir}" includes="*.properties" prefix="${dist.zip.name}"/>
+        </zip>
+    </target>
+
 
     <target name="create-all-jnlps">
 
@@ -50,14 +72,16 @@
 
     <target name="tag.build">
         <property file="${dist.jar.dir}/artifact.properties"/>
-        <property name="jocl-demos.build.number" value="manual-build"/>
         <copy file="${jocl.root}/dist/artifact.properties" todir="${dist.jar.dir}" overwrite="true"/>
-        <echo file="${dist.jar.dir}/artifact.properties" message="jocl-demos.build.number=${build.number}${line.separator}" append="true" />
+        <echo file="${dist.jar.dir}/artifact.properties" message="jocl-demos.build.number=${jocl-demos.build.number}${line.separator}" append="true" />
+        <echo file="${dist.jar.dir}/artifact.properties" message="jocl-demos.build.id=${jocl-demos.build.id}${line.separator}" append="true" />
+        <echo file="${dist.jar.dir}/artifact.properties" message="jocl-demos.build.branch=${jocl-demos.build.branch}${line.separator}" append="true" />
+        <echo file="${dist.jar.dir}/artifact.properties" message="jocl-demos.build.commit=${jocl-demos.build.commit}${line.separator}" append="true" />
     </target>
 
     <target name="create-jnlp">
         <condition  property="jogl.extension"
-                    value='&lt;extension name="jogl-all-awt" href="http://jogamp.org/deployment/webstart-next/jogl-all-awt.jnlp"/&gt;'
+                    value='&lt;extension name="newt-all-awt" href="JOGL_CODEBASE_TAG/newt-all-awt.jnlp"/&gt;'
                     else="">
             <istrue value="${jnlp.jogl}"/>
         </condition>
@@ -66,8 +90,6 @@
                 <replacestring from="DEMO_TITLE" to="${jnlp.title}"/>
                 <replacestring from="NAME_TAG" to="${jnlp.name}"/>
                 <replacestring from="CLASS_TAG" to="${jnlp.mainclass}"/>
-                <replacestring from="DEMO_CODEBASE_TAG" to="${jocl-demos.codepase}/"/>
-                <replacestring from="JOCL_CODEBASE_TAG" to="${jocl.codepase}"/>
                 <replacestring from="EXTENSION" to="${jogl.extension}"/>
             </filterchain>
         </copy>
