@@ -9,6 +9,10 @@
       </not>
     </condition>
 
+    <!-- Pull in GlueGen cpptasks build file -->
+    <property name="gluegen.root"  value="../gluegen" />
+    <import file="${gluegen.root}/make/gluegen-cpptasks.xml" />
+
     <import file="nbproject/build-impl.xml"/>
 
     <target name="-pre-jar">
@@ -24,8 +28,8 @@
         <property name="jocl-demos.version" value="${jocl_demos_base_version}-b${jocl-demos.build.number}-${version.timestamp}" />
     </target>
 
-    <target name="-post-jar" depends="tag.build,create-all-jnlps">
-        <property name="dist.zip.name" value="jocl-demos-${jocl-demos.version}"/>
+    <target name="-post-jar" depends="tag.build,create-all-jnlps,gluegen.cpptasks.detect.os">
+        <property name="dist.zip.name" value="jocl-demos-${jocl-demos.version}-${os.and.arch}"/>
         
         <zip destfile="${dist.dir}/${dist.zip.name}.zip">
             <zipfileset dir="${dist.dir}" includes="jocl-demos.jar" prefix="${dist.zip.name}/jar"/>
