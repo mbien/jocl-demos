@@ -74,6 +74,13 @@
             <param name="jnlp.jogl"         value="false"/>
             <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.info.CLInfo"/>
         </antcall>
+
+        <antcall target="create-jnlp" inheritrefs="true">
+            <param name="jnlp.name"         value="gamma"/>
+            <param name="jnlp.title"        value="Simple gamma correction."/>
+            <param name="jnlp.jogl"         value="false"/>
+            <param name="jnlp.mainclass"    value="com.jogamp.opencl.demos.gamma.CLSimpleGammaCorrection"/>
+        </antcall>
         
     </target>
 
