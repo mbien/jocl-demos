@@ -9,11 +9,12 @@
       </not>
     </condition>
 
-    <!-- Pull in GlueGen cpptasks build file -->
-    <property name="gluegen.root"  value="../gluegen" />
-    <import file="${gluegen.root}/make/gluegen-cpptasks.xml" />
-
     <import file="nbproject/build-impl.xml"/>
+    
+    <property file="nbproject/project.properties" />
+
+    <!-- Pull in GlueGen cpptasks build file -->
+    <import file="${gluegen.root}/make/gluegen-cpptasks.xml" />
 
     <target name="-pre-jar">
         <tstamp>
@@ -42,8 +43,9 @@
 
     <target name="create-all-jnlps">
 
-        <property name="jocl.codepase"       value="http://jogamp.org/deployment/webstart-next/jocl"/>
-        <property name="jocl-demos.codepase" value="http://jogamp.org/deployment/webstart-next/jocl-demos"/>
+        <property name="jocl.codepase"       value="JOCL_CODEBASE_TAG"/>
+        <property name="jogl.codepase"       value="JOGL_CODEBASE_TAG"/>
+        <property name="jocl-demos.codepase" value="DEMO_CODEBASE_TAG"/>
         
         <antcall target="create-jnlp" inheritrefs="true">
             <param name="jnlp.name"         value="glclinterop"/>
@@ -86,7 +88,7 @@
 
     <target name="create-jnlp">
         <condition  property="jogl.extension"
-                    value='&lt;extension name="newt-all-awt" href="JOGL_CODEBASE_TAG/newt-all-awt.jnlp"/&gt;'
+                    value='&lt;extension name="newt-all-awt" href="${jogl.codepase}/newt-all-awt.jnlp"/&gt;'
                     else="">
             <istrue value="${jnlp.jogl}"/>
         </condition>
@@ -95,6 +97,8 @@
                 <replacestring from="DEMO_TITLE" to="${jnlp.title}"/>
                 <replacestring from="NAME_TAG" to="${jnlp.name}"/>
                 <replacestring from="CLASS_TAG" to="${jnlp.mainclass}"/>
+                <replacestring from="DEMO_CODEBASE_TAG" to="${jocl-demos.codepase}"/>
+                <replacestring from="JOCL_CODEBASE_TAG" to="${jocl.codepase}"/>
                 <replacestring from="EXTENSION" to="${jogl.extension}"/>
             </filterchain>
         </copy>
