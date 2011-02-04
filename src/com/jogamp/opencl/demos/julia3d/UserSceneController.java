@@ -135,7 +135,7 @@ public class UserSceneController {
                         model.setEnableShadow(model.getEnableShadow()==0 ? 1 : 0);
                         break;
                     case '1':
-                        model.setEpsilon(model.getEpsilon() * 0.75f);
+                        model.setEpsilon(max(0.0001f, model.getEpsilon() * 0.75f));
                         break;
                     case '2':
                         model.setEpsilon(model.getEpsilon() * 1.f / 0.75f);

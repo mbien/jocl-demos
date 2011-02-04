@@ -1,13 +1,9 @@
 package com.jogamp.opencl.demos.julia3d;
 
-import com.jogamp.opencl.CLDevice;
 import com.jogamp.opencl.demos.julia3d.structs.RenderingConfig;
 import com.jogamp.opengl.util.awt.TextRenderer;
-import java.awt.Dimension;
+import java.awt.Canvas;
 import java.awt.Font;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.nio.FloatBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,7 +13,6 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
-import javax.swing.JFrame;
 
 import static com.jogamp.common.nio.Buffers.*;
 import static javax.media.opengl.GL2.*;
@@ -42,6 +37,7 @@ public class Renderer implements GLEventListener {
     private final Timer timer;
 
     public Renderer(final Julia3d julia3d) {
+        
         this.julia3d = julia3d;
         this.config = julia3d.config;
 
@@ -55,23 +51,8 @@ public class Renderer implements GLEventListener {
         usi = new UserSceneController();
         usi.init(this, canvas, config);
 
-        CLDevice device = julia3d.getDevice();
-        JFrame frame = new JFrame("Java OpenCL - Julia3D "+device.getType()+" "+device.getName());
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                julia3d.release();
-                System.exit(0);
-            }
-        });
-        canvas.setPreferredSize(new Dimension(config.getWidth(), config.getHeight()));
-        frame.add(canvas);
-        frame.pack();
+        textRenderer = new TextRenderer(new Font("Helvetica", Font.BOLD, 14), true, true, null, false);
 
-        textRenderer = new TextRenderer(frame.getFont().deriveFont(Font.BOLD, 14), true, true, null, false);
-
-        frame.setVisible(true);
     }
 
     public void init(GLAutoDrawable drawable) {
@@ -209,6 +190,10 @@ public class Renderer implements GLEventListener {
     }
 
     public void dispose(GLAutoDrawable drawable) {
+    }
+
+    public Canvas getCanvas() {
+        return canvas;
     }
 
 

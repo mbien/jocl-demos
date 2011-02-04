@@ -1,5 +1,10 @@
 package com.jogamp.opencl.demos.julia3d;
 
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.Canvas;
+import java.awt.Dimension;
+import javax.swing.JFrame;
 import com.jogamp.opencl.CLBuffer;
 import com.jogamp.opencl.CLCommandQueue;
 import com.jogamp.opencl.CLContext;
@@ -17,6 +22,8 @@ import java.nio.FloatBuffer;
 import javax.media.opengl.GLProfile;
 import javax.swing.SwingUtilities;
 
+import static com.jogamp.opencl.CLDevice.Type.*;
+import static com.jogamp.opencl.util.CLPlatformFilters.*;
 import static com.jogamp.opencl.CLMemory.Mem.*;
 import static com.jogamp.opencl.CLProgram.CompilerOptions.*;
 import static com.jogamp.opencl.demos.julia3d.UserSceneController.*;
@@ -45,13 +52,13 @@ public class Julia3d {
         updateCamera();
 
         //setup, prefere GPUs
-        CLDevice device = CLPlatform.getDefault().getMaxFlopsDevice(CLDevice.Type.GPU);
+        CLDevice device = CLPlatform.getDefault(type(GPU)).getMaxFlopsDevice();
         if(device == null) {
             device = CLPlatform.getDefault().getMaxFlopsDevice();
         }
         context = CLContext.create(device);
 
-        workGroupSize = 256;
+        workGroupSize = Math.min(256, device.getMaxWorkGroupSize());
 
         //allocate buffers
         configBuffer = context.createBuffer(config.getBuffer(), READ_ONLY);
@@ -189,8 +196,10 @@ public class Julia3d {
 
 
     public static void main(String[] args) {
+        
         GLProfile.initSingleton(true);
-        RenderingConfig config = RenderingConfig.create()
+        
+        final RenderingConfig config = RenderingConfig.create()
             .setWidth(640).setHeight(480)
             .setEnableShadow(1)
             .setSuperSamplingSize(2)
@@ -207,7 +216,25 @@ public class Julia3d {
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new Renderer(julia3d);
+                
+                Renderer renderer = new Renderer(julia3d);
+                CLDevice device = julia3d.getDevice();
+                
+                JFrame frame = new JFrame("Java OpenCL - Julia3D "+device.getType()+" "+device.getName());
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        julia3d.release();
+                        System.exit(0);
+                    }
+                });
+                Canvas canvas = renderer.getCanvas();
+                canvas.setPreferredSize(new Dimension(config.getWidth(), config.getHeight()));
+                frame.add(canvas);
+                frame.pack();
+                frame.setVisible(true);
+                
             }
         });
     }
