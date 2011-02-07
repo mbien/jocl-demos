@@ -274,7 +274,9 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     public void dispose(GLAutoDrawable drawable) {  }
 
     public static void main(String[] args) {
-        GLProfile.initSingleton(true);
+        //false for webstart compatibility
+        GLProfile.initSingleton(false);
+        
         new GLCLInteroperabilityDemo();
     }
 
