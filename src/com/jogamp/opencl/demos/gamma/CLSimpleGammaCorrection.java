@@ -115,15 +115,15 @@ public class CLSimpleGammaCorrection {
             // a few gamma corrected versions
             float gamma = 0.5f;
             gammaCorrection(gamma, queue, kernel, buffer, localWorkSize, globalWorkSize);
-            show(createImage(image.getWidth(), image.getHeight(), buffer), image.getWidth()/2, 50, "corrected with gama="+gamma);
+            show(createImage(image.getWidth(), image.getHeight(), buffer), image.getWidth()/2, 50, "gamma="+gamma);
             
             gamma = 1.5f;
             gammaCorrection(gamma, queue, kernel, buffer, localWorkSize, globalWorkSize);
-            show(createImage(image.getWidth(), image.getHeight(), buffer), image.getWidth()/2*2, 50, "corrected with gama="+gamma);
+            show(createImage(image.getWidth(), image.getHeight(), buffer), image.getWidth()/2*2, 50, "gamma="+gamma);
             
             gamma = 2.0f;
             gammaCorrection(gamma, queue, kernel, buffer, localWorkSize, globalWorkSize);
-            show(createImage(image.getWidth(), image.getHeight(), buffer), image.getWidth()/2*3, 50, "corrected with gama="+gamma);
+            show(createImage(image.getWidth(), image.getHeight(), buffer), image.getWidth()/2*3, 50, "gamma="+gamma);
             
         }finally{
             context.release();
