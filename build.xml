@@ -12,6 +12,8 @@
     <import file="nbproject/build-impl.xml"/>
     
     <property file="nbproject/project.properties" />
+    
+    <property environment="env" />
 
     <!-- Pull in GlueGen cpptasks build file -->
     <import file="${gluegen.root}/make/gluegen-cpptasks.xml" />
@@ -29,7 +31,7 @@
         <property name="jocl-demos.version" value="${jocl_demos_base_version}-b${jocl-demos.build.number}-${version.timestamp}" />
     </target>
 
-    <target name="-post-jar" depends="tag.build,create-all-jnlps,gluegen.cpptasks.detect.os">
+    <target name="-post-jar" depends="tag.build,create-all-jnlps,gluegen.cpptasks.detect.os" unless="build.noarchives">
         <property name="dist.zip.name" value="jocl-demos-${jocl-demos.version}-${os.and.arch}"/>
         
         <zip destfile="${dist.dir}/${dist.zip.name}.zip">
