@@ -12,11 +12,11 @@
     <import file="nbproject/build-impl.xml"/>
     
     <property file="nbproject/project.properties" />
-    
-    <property environment="env" />
 
     <!-- Pull in GlueGen cpptasks build file -->
     <import file="${gluegen.root}/make/gluegen-cpptasks.xml" />
+    <import file="${gluegen.root}/make/jogamp-env.xml" />
+    <import file="${gluegen.root}/make/jogamp-archivetasks.xml" />
 
     <target name="-pre-jar">
         <tstamp>
@@ -31,17 +31,28 @@
         <property name="jocl-demos.version" value="${jocl_demos_base_version}-b${jocl-demos.build.number}-${version.timestamp}" />
     </target>
 
-    <target name="-post-jar" depends="tag.build,create-all-jnlps,gluegen.cpptasks.detect.os" unless="build.noarchives">
+    <target name="-post-jar" depends="tag.build,create-all-jnlps,gluegen.cpptasks.detect.os,build-archive"/>
+
+    <target name="build-archive" if="build.archiveon">
         <property name="dist.zip.name" value="jocl-demos-${jocl-demos.version}-${os.and.arch}"/>
         
-        <zip destfile="${dist.dir}/${dist.zip.name}.zip">
-            <zipfileset dir="${dist.dir}" includes="jocl-demos.jar" prefix="${dist.zip.name}/jar"/>
-            <zipfileset dir="${dist.dir}" includes="*.jnlp" prefix="${dist.zip.name}/jnlp-files"/>
-            <zipfileset dir="."           includes="www/**" prefix="${dist.zip.name}"/>
-            <zipfileset dir="${dist.dir}" includes="*.properties" prefix="${dist.zip.name}"/>
-        </zip>
-    </target>
+        <mkdir dir="${dist.dir}/tmp/${dist.zip.name}"/>
+        
+        <copy todir="${dist.dir}/tmp/${dist.zip.name}/jar" file="${dist.dir}/jocl-demos.jar"/>
+        <copy todir="${dist.dir}/tmp/${dist.zip.name}/jnlp-files" >
+            <fileset dir="${dist.dir}" includes="*.jnlp"/>
+        </copy>
+        <copy todir="${dist.dir}/tmp/${dist.zip.name}" >
+            <fileset dir="." includes="www/**"/>
+            <fileset dir="${dist.dir}" includes="*.properties"/>
+        </copy>
+        
+        <zip        basedir="${dist.dir}/tmp/${dist.zip.name}" destfile="${dist.dir}/${dist.zip.name}.zip"/>
+        <archive.7z basedir="${dist.dir}/tmp/${dist.zip.name}" destfile="${dist.dir}/${dist.zip.name}.7z" includes="*"/>
 
+        <delete dir="${dist.dir}/tmp"/>
+        
+    </target>
 
     <target name="create-all-jnlps">
 
