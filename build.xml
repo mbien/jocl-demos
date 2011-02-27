@@ -18,7 +18,7 @@
     <import file="${gluegen.root}/make/jogamp-env.xml" />
     <import file="${gluegen.root}/make/jogamp-archivetasks.xml" />
 
-    <target name="-pre-jar">
+    <target name="-pre-jar" depends="jogamp.env.init">
         <tstamp>
             <format property="version.timestamp" pattern="yyyyMMdd"/>
         </tstamp>
