@@ -257,8 +257,7 @@ public class BandwidthBenchmark {
             fill(h_data);
 
             // unmap and make data in the host buffer valid
-            cmPinnedData = cmPinnedData.cloneWith(h_data);
-            queue.putUnmapMemory(cmPinnedData);
+            queue.putUnmapMemory(cmPinnedData, h_data);
         } else { // PAGED
             // standard host alloc
             h_data = Buffers.newDirectByteBuffer(memSize);
@@ -299,8 +298,7 @@ public class BandwidthBenchmark {
                 h_data.put(dm_idata).rewind();
                 dm_idata.rewind();
             }
-            cmDevData = cmDevData.cloneWith(dm_idata);
-            queue.putUnmapMemory(cmDevData);
+            queue.putUnmapMemory(cmDevData, dm_idata);
         }
 
         //get the the elapsed time in seconds
@@ -310,8 +308,7 @@ public class BandwidthBenchmark {
         cmDevData.release();
 
         if (cmPinnedData != null) {
-            cmPinnedData = cmPinnedData.cloneWith(h_data);
-            queue.putUnmapMemory(cmPinnedData);
+            queue.putUnmapMemory(cmPinnedData, h_data);
             cmPinnedData.release();
         }
 
@@ -343,8 +340,7 @@ public class BandwidthBenchmark {
             fill(h_data);
 
             // unmap and make data in the host buffer valid
-            cmPinnedData = cmPinnedData.cloneWith(h_data);
-            queue.putUnmapMemory(cmPinnedData);
+            queue.putUnmapMemory(cmPinnedData, h_data);
         } else { // PAGED
             // standard host alloc
             h_data = Buffers.newDirectByteBuffer(memSize);
@@ -379,8 +375,7 @@ public class BandwidthBenchmark {
                 dm_idata.put(h_data).rewind();
                 h_data.rewind();
             }
-            cmDevData = cmDevData.cloneWith(dm_idata);
-            queue.putUnmapMemory(cmDevData);
+            queue.putUnmapMemory(cmDevData, dm_idata);
         }
 
         //get the the elapsed time in ms
