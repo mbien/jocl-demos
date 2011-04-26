@@ -12,7 +12,6 @@ import com.jogamp.opencl.CLKernel;
 import com.jogamp.opencl.CLPlatform;
 import com.jogamp.opencl.CLProgram;
 import com.jogamp.opencl.CLProgram.CompilerOptions;
-import com.jogamp.opencl.util.CLPlatformFilters;
 import com.jogamp.opencl.util.CLProgramConfiguration;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Color;
@@ -124,6 +123,7 @@ public class MultiDeviceFractal implements GLEventListener {
         textRenderer = new TextRenderer(frame.getFont().deriveFont(Font.BOLD, 14), true, true, null, false);
     }
 
+    @Override
     public void init(GLAutoDrawable drawable) {
 
         if(clContext == null) {
@@ -281,11 +281,12 @@ public class MultiDeviceFractal implements GLEventListener {
         // setup one empty PBO per slice
         for (int i = 0; i < slices; i++) {
 
+            int length = width*height * SIZEOF_INT / slices;
             gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[i]);
-            gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, width*height * SIZEOF_INT / slices, null, GL_STREAM_DRAW);
+            gl.glBufferData(GL_PIXEL_UNPACK_BUFFER, length, null, GL_STREAM_DRAW);
             gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-            pboBuffers[i] = clContext.createFromGLBuffer(pbo[i], WRITE_ONLY);
+            pboBuffers[i] = clContext.createFromGLBuffer(pbo[i], length, WRITE_ONLY);
 
         }
 
@@ -350,6 +351,7 @@ public class MultiDeviceFractal implements GLEventListener {
     }
 
     // rendering cycle
+    @Override
     public void display(GLAutoDrawable drawable) {
         GL gl = drawable.getGL();
 
@@ -439,6 +441,7 @@ public class MultiDeviceFractal implements GLEventListener {
         textRenderer.endRendering();
     }
 
+    @Override
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 
         if(this.width == width && this.height == height)
@@ -541,6 +544,7 @@ public class MultiDeviceFractal implements GLEventListener {
         win.dispose();
     }
 
+    @Override
     public void dispose(GLAutoDrawable drawable) {
     }
 
@@ -550,7 +554,7 @@ public class MultiDeviceFractal implements GLEventListener {
         GLProfile.initSingleton(false);
         
         SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+            @Override public void run() {
                 new MultiDeviceFractal(512, 512);
             }
         });

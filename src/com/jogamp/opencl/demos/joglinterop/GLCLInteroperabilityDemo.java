@@ -31,6 +31,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     private final GLUgl2 glu = new GLUgl2();
 
     private final int MESH_SIZE = 256;
+    private final int BUFFER_SIZE = MESH_SIZE * MESH_SIZE * 4 * SIZEOF_FLOAT;
 
     private int width;
     private int height;
@@ -81,7 +82,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 //        ib.rewind();
 
         SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
+            @Override public void run() {
                 initUI();
             }
         });
@@ -111,6 +112,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     }
 
 
+    @Override
     public void init(GLAutoDrawable drawable) {
 
         if(clContext == null) {
@@ -149,7 +151,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
             gl.glEnableClientState(GL2.GL_VERTEX_ARRAY);
                 gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, glObjects[VERTICES]);
-                gl.glBufferData(GL2.GL_ARRAY_BUFFER, MESH_SIZE * MESH_SIZE * 4 * SIZEOF_FLOAT, null, GL2.GL_DYNAMIC_DRAW);
+                gl.glBufferData(GL2.GL_ARRAY_BUFFER, BUFFER_SIZE, null, GL2.GL_DYNAMIC_DRAW);
                 gl.glBindBuffer(GL2.GL_ARRAY_BUFFER, 0);
             gl.glDisableClientState(GL2.GL_VERTEX_ARRAY);
 
@@ -181,7 +183,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
         commandQueue = clContext.getMaxFlopsDevice().createCommandQueue();
 
-        clBuffer = clContext.createFromGLBuffer(glObjects[VERTICES], CLGLBuffer.Mem.WRITE_ONLY);
+        clBuffer = clContext.createFromGLBuffer(glObjects[VERTICES], BUFFER_SIZE, CLGLBuffer.Mem.WRITE_ONLY);
         System.out.println("clsize: "+clBuffer.getCLSize());
 
         System.out.println("cl buffer type: " + clBuffer.getGLObjectType());
@@ -196,6 +198,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     }
 
 
+    @Override
     public void display(GLAutoDrawable drawable) {
 
         GL2 gl = drawable.getGL().getGL2();
@@ -264,6 +267,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
     }
 
 
+    @Override
     public void reshape(GLAutoDrawable drawable, int arg1, int arg2, int width, int height) {
         this.width = width;
         this.height = height;
@@ -272,6 +276,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         pushPerspectiveView(gl);
     }
 
+    @Override
     public void dispose(GLAutoDrawable drawable) {  }
 
     public static void main(String[] args) {
