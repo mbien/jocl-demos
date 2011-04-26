@@ -182,6 +182,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
         commandQueue = clContext.getMaxFlopsDevice().createCommandQueue();
 
         clBuffer = clContext.createFromGLBuffer(glObjects[VERTICES], CLGLBuffer.Mem.WRITE_ONLY);
+        System.out.println("clsize: "+clBuffer.getCLSize());
 
         System.out.println("cl buffer type: " + clBuffer.getGLObjectType());
         System.out.println("shared with gl buffer: " + clBuffer.getGLObjectID());
@@ -230,9 +231,9 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
         kernel.setArg(2, step += 0.05f);
 
-        commandQueue.putAcquireGLObject(clBuffer.ID)
+        commandQueue.putAcquireGLObject(clBuffer)
                     .put2DRangeKernel(kernel, 0, 0, MESH_SIZE, MESH_SIZE, 0, 0)
-                    .putReleaseGLObject(clBuffer.ID)
+                    .putReleaseGLObject(clBuffer)
                     .finish();
 
     }

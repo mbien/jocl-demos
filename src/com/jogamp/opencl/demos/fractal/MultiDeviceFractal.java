@@ -12,6 +12,7 @@ import com.jogamp.opencl.CLKernel;
 import com.jogamp.opencl.CLPlatform;
 import com.jogamp.opencl.CLProgram;
 import com.jogamp.opencl.CLProgram.CompilerOptions;
+import com.jogamp.opencl.util.CLPlatformFilters;
 import com.jogamp.opencl.util.CLProgramConfiguration;
 import com.jogamp.opengl.util.awt.TextRenderer;
 import java.awt.Color;
@@ -386,9 +387,9 @@ public class MultiDeviceFractal implements GLEventListener {
                       .rewind();
 
             // aquire GL objects, and enqueue a kernel with a probe from the list
-            queues[i].putAcquireGLObject(pboBuffers[i].ID)
+            queues[i].putAcquireGLObject(pboBuffers[i])
                      .put2DRangeKernel(kernels[i], 0, 0, sliceWidth, height, 0, 0, probes)
-                     .putReleaseGLObject(pboBuffers[i].ID);
+                     .putReleaseGLObject(pboBuffers[i]);
 
         }
 
