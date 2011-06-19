@@ -173,6 +173,11 @@ public class RadixSort implements CLResource {
         mBlockOffsets.release();
     }
 
+    @Override
+    public boolean isReleased() {
+        return scan.isReleased();
+    }
+
     public void close() {
         release();
     }

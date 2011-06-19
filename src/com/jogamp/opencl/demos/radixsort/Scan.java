@@ -125,6 +125,11 @@ public class Scan implements CLResource {
         }
     }
 
+    @Override
+    public boolean isReleased() {
+        return program.isReleased();
+    }
+
     public void close() {
         release();
     }
