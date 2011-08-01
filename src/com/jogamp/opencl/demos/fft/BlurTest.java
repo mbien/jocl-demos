@@ -493,7 +493,7 @@ public class BlurTest implements Runnable, ChangeListener, ActionListener {
             + " t = g[doff]*s; fr.s1 = t.s0; fi.s1 = t.s1;"
             + " t = r[doff]*s; fr.s2 = t.s0; fi.s2 = t.s1;"
             + " t = a[doff]*s; fr.s3 = t.s0; fi.s3 = t.s1;"
-            + " fa = sqrt(fr*fr + fi*fi) * 255;"
+            + " fa = sqrt(fr*fr + fi*fi) * 255.0f;"
             + " fa = clamp(fa, 0.0f, 255.0f);"
             + " argb[soff +sstride*gy+gx] = convert_uchar4(fa);"
             + "}\n\n";
