@@ -7,6 +7,7 @@ import com.jogamp.opencl.CLBuffer;
 import com.jogamp.opencl.CLCommandQueue;
 import com.jogamp.opencl.CLContext;
 import com.jogamp.opencl.CLDevice;
+import com.jogamp.opencl.CLDevice.Type;
 import com.jogamp.opencl.CLKernel;
 import com.jogamp.opencl.CLProgram;
 import java.io.IOException;
@@ -21,7 +22,9 @@ import static com.jogamp.opencl.CLProgram.*;
 /**
  * Bitonic sort optimized for GPUs.
  * Uses NVIDIA's bitonic merge sort kernel.
+ * 
  * @author Michael Bien
+ * @author rexguo (bug fix for OSX)
  */
 public class BitonicSort {
 
@@ -46,8 +49,23 @@ public class BitonicSort {
 
         try{
 
-            context = CLContext.create();
+            /**
+             * It is possible that a CPU context is created on
+             * machines with under-powered GPUs. So we explicitly 
+             * ask for a GPU device. 
+             * 
+             * On CPU devices on OSX 10.6.8, Core 2 Duo 3GHz, trying
+             * to setup the workgroup size results in:
+             * Exception in thread "main" java.lang.RuntimeException: 
+             * Minimum work-group size 512 required by this application 
+             * is not supported on this device.
+             */
+            context = CLContext.create(Type.GPU);
             CLCommandQueue queue = context.getMaxFlopsDevice().createCommandQueue();
+
+            out.println(context);
+            out.println(context.getMaxFlopsDevice());
+            out.println();
 
             out.println("Initializing OpenCL bitonic sorter...");
             kernels = initBitonicSort(queue);
