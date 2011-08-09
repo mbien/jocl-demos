@@ -8,6 +8,7 @@ import com.jogamp.opencl.CLBuffer;
 import com.jogamp.opencl.CLCommandQueue;
 import com.jogamp.opencl.CLContext;
 import com.jogamp.opencl.CLPlatform;
+import com.jogamp.opencl.util.CLPlatformFilters;
 import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.Random;
@@ -26,8 +27,13 @@ public class RadixSortDemo {
 
         CLContext context = null;
         try{
+            CLPlatform platform = CLPlatform.getDefault(CLPlatformFilters.type(GPU));
+            if (platform == null) {
+                throw new RuntimeException("this demo requires a GPU OpenCL implementation");
+            }
+            
             //single GPU setup
-            context = CLContext.create(CLPlatform.getDefault().getMaxFlopsDevice(GPU));
+            context = CLContext.create(platform.getMaxFlopsDevice());
             CLCommandQueue queue = context.getDevices()[0].createCommandQueue();
 
             int maxValue = Integer.MAX_VALUE;

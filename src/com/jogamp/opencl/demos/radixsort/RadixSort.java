@@ -115,7 +115,7 @@ public class RadixSort implements CLResource {
         int localWorkSize = CTA_SIZE;
 
         ckRadixSortBlocksKeysOnly.putArg(keys).putArg(tempKeys).putArg(nbits).putArg(startbit)
-                                 .putArg(numElements).putArg(totalBlocks).putNullArg(4 * CTA_SIZE * 4)
+                                 .putArg(numElements).putArg(totalBlocks).putArgSize(4 * CTA_SIZE * 4)
                                  .rewind();
 
         queue.put1DRangeKernel(ckRadixSortBlocksKeysOnly, 0, globalWorkSize, localWorkSize);
@@ -128,7 +128,7 @@ public class RadixSort implements CLResource {
         int localWorkSize = CTA_SIZE;
 
         ckFindRadixOffsets.putArg(tempKeys).putArg(mCounters).putArg(mBlockOffsets)
-                          .putArg(startbit).putArg(numElements).putArg(totalBlocks).putNullArg(2 * CTA_SIZE * 4)
+                          .putArg(startbit).putArg(numElements).putArg(totalBlocks).putArgSize(2 * CTA_SIZE * 4)
                           .rewind();
 
         queue.put1DRangeKernel(ckFindRadixOffsets, 0, globalWorkSize, localWorkSize);
@@ -142,7 +142,7 @@ public class RadixSort implements CLResource {
         int extra_space = nHist / NUM_BANKS;
         int shared_mem_size = 4 * (nHist + extra_space);
 
-        ckScanNaive.putArg(mCountersSum).putArg(mCounters).putArg(nHist).putNullArg(2 * shared_mem_size).rewind();
+        ckScanNaive.putArg(mCountersSum).putArg(mCounters).putArg(nHist).putArgSize(2 * shared_mem_size).rewind();
 
         queue.put1DRangeKernel(ckScanNaive, 0, globalWorkSize, localWorkSize);
     }
@@ -154,7 +154,7 @@ public class RadixSort implements CLResource {
         int localWorkSize = CTA_SIZE;
 
         ckReorderDataKeysOnly.putArg(keys).putArg(tempKeys).putArg(mBlockOffsets).putArg(mCountersSum).putArg(mCounters)
-                             .putArg(startbit).putArg(numElements).putArg(totalBlocks).putNullArg(2 * CTA_SIZE * 4).rewind();
+                             .putArg(startbit).putArg(numElements).putArg(totalBlocks).putArgSize(2 * CTA_SIZE * 4).rewind();
 
         queue.put1DRangeKernel(ckReorderDataKeysOnly, 0, globalWorkSize, localWorkSize);
     }

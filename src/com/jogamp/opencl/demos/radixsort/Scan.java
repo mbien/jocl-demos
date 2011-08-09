@@ -78,7 +78,7 @@ public class Scan implements CLResource {
 
     void scanExclusiveLocal1(CLBuffer<?> dst, CLBuffer<?> src, int n, int size) {
 
-        ckScanExclusiveLocal1.putArg(dst).putArg(src).putNullArg(2 * WORKGROUP_SIZE * 4).putArg(size)
+        ckScanExclusiveLocal1.putArg(dst).putArg(src).putArgSize(2 * WORKGROUP_SIZE * 4).putArg(size)
                              .rewind();
 
         int localWorkSize = WORKGROUP_SIZE;
@@ -90,7 +90,7 @@ public class Scan implements CLResource {
     void scanExclusiveLocal2(CLBuffer<?> buffer, CLBuffer<?> dst, CLBuffer<?> src, int n, int size) {
 
         int elements = n * size;
-        ckScanExclusiveLocal2.putArg(buffer).putArg(dst).putArg(src).putNullArg(2 * WORKGROUP_SIZE * 4)
+        ckScanExclusiveLocal2.putArg(buffer).putArg(dst).putArg(src).putArgSize(2 * WORKGROUP_SIZE * 4)
                              .putArg(elements).putArg(size).rewind();
 
         int localWorkSize = WORKGROUP_SIZE;
