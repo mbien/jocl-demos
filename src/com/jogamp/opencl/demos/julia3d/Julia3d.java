@@ -180,8 +180,7 @@ public class Julia3d {
         vsub(dir, target, orig);
         vnorm(dir);
 
-        Vec up = Vec.create().setX(0).setY(1).setZ(0);
-        vxcross(camX, dir, up);
+        vxcross(camX, dir, Vec.UP);
         vnorm(camX);
         vmul(camX, config.getWidth() * .5135f / config.getHeight(), camX);
 
@@ -198,7 +197,7 @@ public class Julia3d {
     public static void main(String[] args) {
         
         //false for webstart compatibility
-        GLProfile.initSingleton(false);
+        GLProfile.initSingleton();
         
         final RenderingConfig config = RenderingConfig.create()
             .setWidth(640).setHeight(480)

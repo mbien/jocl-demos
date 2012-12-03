@@ -6,16 +6,34 @@ package com.jogamp.opencl.demos.julia3d.structs;
 import com.jogamp.common.nio.*;
 
 
-public abstract class RenderingConfig {
+public class RenderingConfig {
 
   StructAccessor accessor;
+  final static int intSize = Integer.SIZE >> 3;
+  final static int floatSize = Float.SIZE >> 3;
 
   public static int size() {
-//    if (CPU.is32Bit()) {
-//      return RenderingConfig32.size();
-//    } else {
-      return RenderingConfig64.size();
-//    }
+    // width
+    int size = intSize;
+    // height
+    size += intSize;
+    // sampling size
+    size += intSize;
+    // fast rendering
+    size += intSize;
+    // enable shadow
+    size += intSize;
+    // max iterations
+    size += intSize;
+    // epsilon
+    size += floatSize;
+    // mu 
+    size += (4 * floatSize);
+    // light
+    size += (3 * floatSize);
+    // Camera
+    size += Camera.size();
+    return size; 
   }
 
   public static RenderingConfig create() {
@@ -23,11 +41,7 @@ public abstract class RenderingConfig {
   }
 
   public static RenderingConfig create(java.nio.ByteBuffer buf) {
-//    if (CPU.is32Bit()) {
-//      return new RenderingConfig32(buf);
-//    } else {
-      return new RenderingConfig64(buf);
-//    }
+    return new RenderingConfig(buf);
   }
 
   RenderingConfig(java.nio.ByteBuffer buf) {
@@ -37,42 +51,91 @@ public abstract class RenderingConfig {
   public java.nio.ByteBuffer getBuffer() {
     return accessor.getBuffer();
   }
+  
+  public RenderingConfig setWidth(int val) {
+    accessor.setIntAt(0, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setWidth(int val);
+  public int getWidth() {
+    return accessor.getIntAt(0);
+  }
 
-  public abstract int getWidth();
+  public RenderingConfig setHeight(int val) {
+    accessor.setIntAt(4, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setHeight(int val);
+  public int getHeight() {
+    return accessor.getIntAt(4);
+  }
 
-  public abstract int getHeight();
+  public RenderingConfig setSuperSamplingSize(int val) {
+    accessor.setIntAt(8, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setSuperSamplingSize(int val);
+  public int getSuperSamplingSize() {
+    return accessor.getIntAt(8);
+  }
 
-  public abstract int getSuperSamplingSize();
+  public RenderingConfig setActvateFastRendering(int val) {
+    accessor.setIntAt(12, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setActvateFastRendering(int val);
+  public int getActvateFastRendering() {
+    return accessor.getIntAt(12);
+  }
 
-  public abstract int getActvateFastRendering();
+  public RenderingConfig setEnableShadow(int val) {
+    accessor.setIntAt(16, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setEnableShadow(int val);
+  public int getEnableShadow() {
+    return accessor.getIntAt(16);
+  }
 
-  public abstract int getEnableShadow();
+  public RenderingConfig setMaxIterations(int val) {
+    accessor.setIntAt(20, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setMaxIterations(int val);
+  public int getMaxIterations() {
+    return accessor.getIntAt(20);
+  }
 
-  public abstract int getMaxIterations();
+  public RenderingConfig setEpsilon(float val) {
+    accessor.setFloatAt(24, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setEpsilon(float val);
+  public float getEpsilon() {
+    return accessor.getFloatAt(24);
+  }
 
-  public abstract float getEpsilon();
+  public RenderingConfig setMu(float[] val) {
+    accessor.setFloatsAt(28, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setMu(float[] val);
+  public float[] getMu() {
+    return accessor.getFloatsAt(28, new float[4]);
+  }
 
-  public abstract float[] getMu();
+  public RenderingConfig setLight(float[] val) {
+    accessor.setFloatsAt(44, val);
+    return this;
+  }
 
-  public abstract RenderingConfig setLight(float[] val);
+  public float[] getLight() {
+    return accessor.getFloatsAt(44, new float[3]);
+  }
 
-  public abstract float[] getLight();
+  public Camera getCamera() {
+    return new Camera(accessor.slice(56, 60));
+  }
+  
 
-  public abstract Camera getCamera();
 }

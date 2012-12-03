@@ -281,7 +281,7 @@ public class GLCLInteroperabilityDemo implements GLEventListener {
 
     public static void main(String[] args) {
         //false for webstart compatibility
-        GLProfile.initSingleton(false);
+        GLProfile.initSingleton();
         
         new GLCLInteroperabilityDemo();
     }
