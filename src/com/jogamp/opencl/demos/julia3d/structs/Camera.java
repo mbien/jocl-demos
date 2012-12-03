@@ -6,45 +6,53 @@ package com.jogamp.opencl.demos.julia3d.structs;
 import com.jogamp.common.nio.*;
 
 
-public abstract class Camera {
-
-  StructAccessor accessor;
+public class Camera {
+  private final Vec orig;
+  private final Vec target;
+  private final Vec dir;
+  private final Vec x;
+  private final Vec y;
+  
+  public Camera(java.nio.ByteBuffer buf) {
+    StructAccessor accessor = new StructAccessor(buf);
+    orig    = new Vec(accessor.slice(0 * Vec.size(), Vec.size())); 
+    target  = new Vec(accessor.slice(1 * Vec.size(), Vec.size()));
+    dir     = new Vec(accessor.slice(2 * Vec.size(), Vec.size()));
+    x       = new Vec(accessor.slice(3 * Vec.size(), Vec.size()));
+    y       = new Vec(accessor.slice(4 * Vec.size(), Vec.size()));
+  }
 
   public static int size() {
-//    if (CPU.is32Bit()) {
-//      return Camera32.size();
-//    } else {
-      return Camera64.size();
-//    }
+    return Vec.size() * 5;
   }
 
-  public static Camera create() {
-    return create(Buffers.newDirectByteBuffer(size()));
+  public Vec getOrig() {
+    return orig;
   }
 
-  public static Camera create(java.nio.ByteBuffer buf) {
-//    if (CPU.is32Bit()) {
-//      return new Camera32(buf);
-//    } else {
-      return new Camera64(buf);
-//    }
+  public Vec getTarget() {
+    return target;
   }
 
-  Camera(java.nio.ByteBuffer buf) {
-    accessor = new StructAccessor(buf);
+  public Vec getDir() {
+    return dir;
   }
 
-  public java.nio.ByteBuffer getBuffer() {
-    return accessor.getBuffer();
+  public Vec getX() {
+    return x;
   }
 
-  public abstract Vec getOrig();
-
-  public abstract Vec getTarget();
-
-  public abstract Vec getDir();
-
-  public abstract Vec getX();
-
-  public abstract Vec getY();
+  public Vec getY() {
+    return y;
+  }
+  
+  public String toString() {
+    return "{\n"
+      + "\torigin: " + getOrig() + ",\n" 
+      + "\ttarget: " + getTarget() + ",\n" 
+      + "\tdir:    " + getDir() + ",\n" 
+      + "\tx:      " + getX() + ",\n" 
+      + "\ty:      " + getY() + ",\n}"; 
+  }
+  
 }

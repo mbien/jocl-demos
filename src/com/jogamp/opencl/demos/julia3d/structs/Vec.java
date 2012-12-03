@@ -7,47 +7,59 @@ package com.jogamp.opencl.demos.julia3d.structs;
 import com.jogamp.common.nio.*;
 
 
-public abstract class Vec {
+public class Vec {
 
-  StructAccessor accessor;
-
+  public static final Vec UP = new Vec(Buffers.newDirectByteBuffer(size())).setX(0).setY(1).setZ(0);
+  
   public static int size() {
-//    if (CPU.is32Bit()) {
-//      return Vec32.size();
-//    } else {
-      return Vec64.size();
-//    }
+    return 3 * (Float.SIZE / Byte.SIZE);
   }
 
-  public static Vec create() {
-    return create(Buffers.newDirectByteBuffer(size()));
-  }
+  private StructAccessor accessor;
 
-  public static Vec create(java.nio.ByteBuffer buf) {
-//    if (CPU.is32Bit()) {
-//      return new Vec32(buf);
-//    } else {
-      return new Vec64(buf);
-//    }
-  }
-
-  Vec(java.nio.ByteBuffer buf) {
-    accessor = new StructAccessor(buf);
+  public Vec() {
+    this(Buffers.newDirectByteBuffer(size()));
   }
 
   public java.nio.ByteBuffer getBuffer() {
     return accessor.getBuffer();
   }
 
-  public abstract Vec setX(float val);
+  public Vec(java.nio.ByteBuffer buf) {
+    accessor = new StructAccessor(buf);
+  }
 
-  public abstract float getX();
+  public Vec setX(float val) {
+    accessor.setFloatAt(0, val);
+    return this;
+  }
 
-  public abstract Vec setY(float val);
+  public float getX() {
+    return accessor.getFloatAt(0);
+  }
 
-  public abstract float getY();
+  public Vec setY(float val) {
+    accessor.setFloatAt(4, val);
+    return this;
+  }
 
-  public abstract Vec setZ(float val);
+  public float getY() {
+    return accessor.getFloatAt(4);
+  }
 
-  public abstract float getZ();
+  public Vec setZ(float val) {
+    accessor.setFloatAt(8, val);
+    return this;
+  }
+
+  public float getZ() {
+    return accessor.getFloatAt(8);
+  }
+  
+
+  public String toString() {
+    return "{ " + getX() + ", " + getY() + ", " + getZ() + " }";
+  }
 }
+
+
